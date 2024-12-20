@@ -6,6 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   Image,
+  Dimensions,
 } from 'react-native';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
@@ -71,6 +72,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
 
   const imageUrl = "https://res.cloudinary.com/dws2bgxg4/image/upload/v1734385887/loginp_ovgecg.png"; // Replace with your Cloudinary URL
 
+  const screenWidth = Dimensions.get('window').width;
+
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!imageLoaded) {
@@ -93,7 +96,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
           )}
           <Image
             source={{ uri: imageUrl }}
-            style={{ height: 300, width: 300, transform: [{ rotate: '-5deg' }] }}
+            style={{ height: screenWidth * 0.75, width: screenWidth * 0.75, transform: [{ rotate: '-5deg' }] }}
             onLoad={() => setImageLoaded(true)}
             onError={() => setImageError(true)}
           />

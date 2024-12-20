@@ -115,6 +115,6 @@ const styles = StyleSheet.create({
     },
     googleImage: {
         height: 35,
-        width: 40,
+        width: 35, // Adjusted width to match height
     },
 });
