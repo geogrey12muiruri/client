@@ -13,6 +13,7 @@ import store from "./(redux)/store";
 import { Provider, useDispatch } from "react-redux";
 import { loadUser } from "./(redux)/authSlice";
 import { PaperProvider } from 'react-native-paper'; // Import PaperProvider
+import { AuthProvider } from '../context/AuthContext'; // Import AuthProvider
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -60,7 +61,9 @@ function RootLayout() {
 function App() {
   return (
     <Provider store={store}>
-      <RootLayout />
+      <AuthProvider>
+        <RootLayout />
+      </AuthProvider>
     </Provider>
   );
 }

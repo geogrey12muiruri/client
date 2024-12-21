@@ -60,6 +60,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingTop: 24,
     elevation: 4,
+    padding: 16, // Added padding
   },
   leftSection: {
     flexDirection: 'row',

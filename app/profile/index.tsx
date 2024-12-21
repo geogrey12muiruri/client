@@ -351,7 +351,7 @@ const EditableField = ({ value, isEditing, onEdit, onSave, iconColor, iconName, 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#e0f7fa',
+    backgroundColor: '#f7f39a',
     // paddingTop: 40 is moved to the SafeAreaView inline style
   },
   scrollViewContent: {

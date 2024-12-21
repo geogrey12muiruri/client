@@ -1,9 +1,31 @@
-import * as React from "react";
-import { View, StyleSheet, Text, TouchableOpacity, ImageBackground, ImageBackgroundProps } from "react-native";
+import React, { useContext, useEffect, useState } from 'react';
+import { Redirect } from 'expo-router';
+import { AuthContext } from '../context/AuthContext';
+import { View, StyleSheet, Text, TouchableOpacity, ImageBackground } from "react-native";
 import { useRouter } from "expo-router";
 
 const App: React.FC = () => {
   const router = useRouter();
+  const { user } = useContext(AuthContext);
+  const [loading, setLoading] = useState(true); 
+  const [redirectPath, setRedirectPath] = useState(null); 
+
+  useEffect(() => {
+    if (user) {
+      setRedirectPath('/home');
+    } else {
+      setRedirectPath('/(routes)/onboarding'); 
+    }
+    setLoading(false); 
+  }, [user]);
+
+  if (loading) {
+    return null; 
+  }
+
+  if (redirectPath) {
+    return <Redirect href={redirectPath} />; 
+  }
 
   return (
     <ImageBackground
