@@ -145,7 +145,7 @@ const InsuranceScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { paddingTop: 20 }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <FeatherIcon color="#000" name="arrow-left" size={24} />
@@ -244,6 +244,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f8f8',
+    // paddingTop: 20 is moved to the SafeAreaView inline style
   },
   header: {
     flexDirection: 'row',

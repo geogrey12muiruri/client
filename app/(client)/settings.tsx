@@ -84,7 +84,7 @@ const Settings: React.FC = () => {
 
           <TouchableOpacity
             onPress={() => {
-              // handle onPress
+              
             }}
             style={styles.row}
           >
@@ -156,7 +156,7 @@ const Settings: React.FC = () => {
 
           <TouchableOpacity
             onPress={() => {
-              // handle onPress
+             
             }}
             style={styles.row}
           >
