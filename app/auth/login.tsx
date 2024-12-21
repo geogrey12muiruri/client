@@ -18,7 +18,6 @@ import { loginUser } from "../(services)/api/api";
 import { useDispatch } from 'react-redux';
 import { loginAction } from '../(redux)/authSlice';
 
-import GoogleSVG from '../../assets/images/misc/google.svg';
 
 import CustomButton from '../../components/CustomButton';
 import InputField from '../../components/InputField';
@@ -43,13 +42,14 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   });
 
   const handleLoginSuccess = (data: any) => {
+    const [firstName, lastName] = data.username.split(' ');
     const userData = {
       id: data.id,
       email: data.email,
       username: data.username,
       token: data.token,
-      firstName: data.firstName || '',
-      lastName: data.lastName || '',
+      firstName: firstName || '',
+      lastName: lastName || '',
       profilePicture: data.profilePicture || '',
     };
     dispatch(loginAction(userData));

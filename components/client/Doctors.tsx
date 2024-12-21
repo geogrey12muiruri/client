@@ -54,25 +54,21 @@ const Doctors: React.FC<DoctorsProps> = ({ searchQuery }) => {
           horizontal
           renderItem={({ item }) => (
             <View style={styles.doctorItem}>
-              <Image
-                source={{
-                  uri:
-                    item.profileImage ||
-                    'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg',
-                }}
-                style={styles.doctorImage}
-              />
+              <TouchableOpacity onPress={() => handleConsult(item.id)}>
+                <Image
+                  source={{
+                    uri:
+                      item.profileImage ||
+                      'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg',
+                  }}
+                  style={styles.doctorImage}
+                />
+              </TouchableOpacity>
               <View style={styles.nameCategoryContainer}>
                 <Text style={styles.doctorName}>{item.name}</Text>
                 <Text style={styles.doctorName}>{item.specialty}</Text>
               </View>
               <Text>{item.clinicAddress || 'Location not specified'}</Text>
-              <TouchableOpacity
-                style={[styles.button, styles.consultButton]}
-                onPress={() => handleConsult(item.id)}
-              >
-                <Text style={styles.buttonText}>View</Text>
-              </TouchableOpacity>
             </View>
           )}
           keyExtractor={(item, index) => `${item.id}-${index}`}
@@ -87,15 +83,14 @@ const Doctors: React.FC<DoctorsProps> = ({ searchQuery }) => {
 const styles = StyleSheet.create({
   doctorItem: {
     marginRight: 10,
-    borderWidth: 1,
-    borderColor: Colors.LIGHT_GRAY,
+   
     borderRadius: 10,
     padding: 10,
     width: 240,
   },
   doctorImage: {
     width: '100%',
-    height: 150,
+    height: 100,
     borderRadius: 10,
   },
   nameCategoryContainer: {

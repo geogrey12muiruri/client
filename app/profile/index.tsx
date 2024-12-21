@@ -127,28 +127,29 @@ const ProfileScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollViewContent}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()}>
-            <FeatherIcon name="arrow-left" size={24} color="#000" />
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <FeatherIcon name="arrow-left" size={24} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Profile</Text>
+      </View>
+      <View style={styles.profileSection}>
+        <View style={styles.profileBackground}>
+          <TouchableOpacity style={styles.profileImageWrapper} onPress={pickImage}>
+            {patientProfile.picture ? (
+              <Image source={{ uri: patientProfile.picture }} style={styles.profileImage} />
+            ) : (
+              <FeatherIcon name="camera" size={50} color="#ccc" />
+            )}
+            <View style={styles.editIconWrapper}>
+              <FeatherIcon name="edit-3" size={18} color="#fff" />
+            </View>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Profile</Text>
         </View>
-        <View style={styles.profileSection}>
-          <View style={styles.profileBackground}>
-            <TouchableOpacity style={styles.profileImageWrapper} onPress={pickImage}>
-              {patientProfile.picture ? (
-                <Image source={{ uri: patientProfile.picture }} style={styles.profileImage} />
-              ) : (
-                <FeatherIcon name="camera" size={50} color="#ccc" />
-              )}
-              <View style={styles.editIconWrapper}>
-                <FeatherIcon name="edit-3" size={18} color="#fff" />
-              </View>
-            </TouchableOpacity>
-          </View>
-        </View>
+      </View>
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <HorizontalLine />
+        <Text style={styles.sectionTitle}>Personal Information</Text>
         <EditableField
           value={fullName}
           isEditing={editingField === 'fullName'}
@@ -156,6 +157,7 @@ const ProfileScreen = () => {
           onSave={(value) => handleSave('fullName', value)}
           iconColor="#007bff"
           iconName="user"
+          label="Full Name"
         />
         <EditableField
           value={dob.toDateString()}
@@ -164,6 +166,7 @@ const ProfileScreen = () => {
           onSave={(value) => handleSave('dob', value)}
           iconColor="#ff6347"
           iconName="calendar"
+          label="Date of Birth"
         />
         {showDatePicker && (
           <DateTimePicker
@@ -197,8 +200,10 @@ const ProfileScreen = () => {
           onSave={(value) => handleSave('phoneNumber', value)}
           iconColor="#007afe"
           iconName="phone"
+          label="Phone Number"
         />
         <HorizontalLine />
+        <Text style={styles.sectionTitle}>Address</Text>
         <EditableField
           value={address.street}
           isEditing={editingField === 'street'}
@@ -206,6 +211,7 @@ const ProfileScreen = () => {
           onSave={(value) => handleSave('street', value)}
           iconColor="#007bff"
           iconName="map-pin"
+          label="Street"
         />
         <EditableField
           value={address.city}
@@ -214,6 +220,7 @@ const ProfileScreen = () => {
           onSave={(value) => handleSave('city', value)}
           iconColor="#fe9400"
           iconName="map"
+          label="City"
         />
         <EditableField
           value={address.state}
@@ -222,6 +229,7 @@ const ProfileScreen = () => {
           onSave={(value) => handleSave('state', value)}
           iconColor="#32c759"
           iconName="map"
+          label="State"
         />
         <EditableField
           value={address.zipCode}
@@ -230,8 +238,10 @@ const ProfileScreen = () => {
           onSave={(value) => handleSave('zipCode', value)}
           iconColor="#007afe"
           iconName="map-pin"
+          label="Zip Code"
         />
         <HorizontalLine />
+        <Text style={styles.sectionTitle}>Emergency Contact</Text>
         <EditableField
           value={emergencyContact}
           isEditing={editingField === 'emergencyContact'}
@@ -239,6 +249,7 @@ const ProfileScreen = () => {
           onSave={(value) => handleSave('emergencyContact', value)}
           iconColor="#ff6347"
           iconName="phone-call"
+          label="Emergency Contact"
         />
         <HorizontalLine />
         <TouchableOpacity style={styles.navigationButton} onPress={() => router.push('/insurance')}>
@@ -250,7 +261,7 @@ const ProfileScreen = () => {
   );
 };
 
-const EditableField = ({ value, isEditing, onEdit, onSave, iconColor, iconName }) => {
+const EditableField = ({ value, isEditing, onEdit, onSave, iconColor, iconName, label }) => {
   const [inputValue, setInputValue] = useState(value);
 
   useEffect(() => {
@@ -267,7 +278,7 @@ const EditableField = ({ value, isEditing, onEdit, onSave, iconColor, iconName }
         <View style={[styles.inputIconWrapper, { backgroundColor: iconColor }]}>
           <FeatherIcon name={iconName} size={20} color="#fff" />
         </View>
-        <Text style={styles.inputValue}>{value || `Enter value`}</Text>
+        <Text style={styles.inputValue}>{value || `Enter ${label}`}</Text>
         <TouchableOpacity onPress={onEdit}>
           <FeatherIcon name="edit-3" size={20} color={iconColor} />
         </TouchableOpacity>
@@ -275,7 +286,7 @@ const EditableField = ({ value, isEditing, onEdit, onSave, iconColor, iconName }
       {isEditing && (
         <TextInput
           style={styles.input}
-          placeholder={`Enter value`}
+          placeholder={`Enter ${label}`}
           value={inputValue}
           onChangeText={setInputValue}
           onBlur={handleBlur}
@@ -297,12 +308,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginLeft: 16,
-    color: '#333',
+    position: 'sticky',
+    top: 0,
+    backgroundColor: '#f7f7f7',
+    zIndex: 1,
+    paddingVertical: 10,
   },
   row: {
     flexDirection: 'row',

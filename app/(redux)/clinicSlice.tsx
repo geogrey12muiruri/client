@@ -91,6 +91,11 @@ export const fetchClinicById = createAsyncThunk(
       // Ensure clinicImages is populated
       clinic.clinicImages = clinic.clinicImages?.map(image => image.urls[0]) || [];
 
+      // Convert dob to string if it exists
+      if (clinic.dob) {
+        clinic.dob = new Date(clinic.dob).toISOString();
+      }
+
       // Update the Redux state with the fetched clinic data
       dispatch(setSelectedClinic(clinic));
       return clinic;

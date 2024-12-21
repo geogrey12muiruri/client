@@ -198,8 +198,7 @@ const Clinics: React.FC<ClinicsProps> = ({ searchQuery, onViewAll }) => {
 const styles = StyleSheet.create({
   clinicItem: {
     marginRight: 10,
-    borderWidth: 1,
-    borderColor: Colors.LIGHT_GRAY,
+   
     borderRadius: 10,
     padding: 10,
     width: 200,

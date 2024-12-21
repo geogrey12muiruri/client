@@ -21,13 +21,13 @@ import { useRouter } from 'expo-router';
 import { debounce } from 'lodash';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const EditableField = ({ value, onChangeText, isEditing, onEdit, iconColor, iconName }) => (
+const EditableField = ({ value, onChangeText, isEditing, onEdit, iconColor, iconName, label }) => (
   <View style={styles.inputContainer}>
     <View style={styles.inputWrapper}>
       <View style={[styles.inputIconWrapper, { backgroundColor: iconColor }]}>
         <FeatherIcon name={iconName} size={20} color="#fff" />
       </View>
-      <Text style={styles.inputValue}>{value || 'Enter value'}</Text>
+      <Text style={styles.inputValue}>{value || `Enter ${label}`}</Text>
       <TouchableOpacity onPress={onEdit}>
         <FeatherIcon name="edit-3" size={20} color={iconColor} />
       </TouchableOpacity>
@@ -35,7 +35,7 @@ const EditableField = ({ value, onChangeText, isEditing, onEdit, iconColor, icon
     {isEditing && (
       <TextInput
         style={styles.input}
-        placeholder="Enter value"
+        placeholder={`Enter ${label}`}
         value={value}
         onChangeText={onChangeText}
         onBlur={() => onChangeText(value)}
@@ -161,6 +161,7 @@ const InsuranceScreen = () => {
           onEdit={() => handleEdit('insuranceNumber')}
           iconColor="#007bff"
           iconName="file-text"
+          label="Insurance Number"
         />
         <EditableField
           value={formData.groupNumber}
@@ -169,6 +170,7 @@ const InsuranceScreen = () => {
           onEdit={() => handleEdit('groupNumber')}
           iconColor="#fe9400"
           iconName="hash"
+          label="Group Number"
         />
         <EditableField
           value={formData.policyholderName}
@@ -177,6 +179,7 @@ const InsuranceScreen = () => {
           onEdit={() => handleEdit('policyholderName')}
           iconColor="#32c759"
           iconName="user"
+          label="Policyholder Name"
         />
         <EditableField
           value={formData.relationshipToPolicyholder}
@@ -185,6 +188,7 @@ const InsuranceScreen = () => {
           onEdit={() => handleEdit('relationshipToPolicyholder')}
           iconColor="#007afe"
           iconName="users"
+          label="Relationship to Policyholder"
         />
         <EditableField
           value={formData.effectiveDate}
@@ -193,6 +197,7 @@ const InsuranceScreen = () => {
           onEdit={() => handleEdit('effectiveDate')}
           iconColor="#ff6347"
           iconName="calendar"
+          label="Effective Date"
         />
         <EditableField
           value={formData.expirationDate}
@@ -201,6 +206,7 @@ const InsuranceScreen = () => {
           onEdit={() => handleEdit('expirationDate')}
           iconColor="#ff6347"
           iconName="calendar"
+          label="Expiration Date"
         />
         <Text style={styles.addProviderText}>Add Insurance Provider</Text>
         <FlatList
