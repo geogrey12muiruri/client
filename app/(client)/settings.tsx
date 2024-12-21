@@ -39,7 +39,7 @@ const Settings: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#e0f7fa' }}>
       <ScrollView>
         <View style={styles.section}>
           <Text style={styles.rowLabel}>Patient Profile</Text>

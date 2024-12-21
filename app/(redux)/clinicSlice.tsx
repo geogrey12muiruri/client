@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction, createAsyncThunk, createSelector } from '@reduxjs/toolkit';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Professional {
   _id: string;
@@ -63,10 +64,12 @@ const initialState: ClinicsState = {
 const fetchFreshClinics = async () => {
   try {
     const response = await axios.get('https://medplus-health.onrender.com/api/clinics');
-    return response.data.map((clinic: Clinic) => ({
+    const clinics = response.data.map((clinic: Clinic) => ({
       ...clinic,
-      clinicImages: clinic.clinicImages?.map(image => image.urls[0]) || [], // Ensure clinicImages is populated
+      clinicImages: clinic.clinicImages?.map(image => image.urls[0]) || [],
     }));
+    await AsyncStorage.setItem('clinicList', JSON.stringify(clinics));
+    return clinics;
   } catch (error) {
     console.error('Failed to fetch fresh clinics', error);
     return [];
@@ -76,6 +79,12 @@ const fetchFreshClinics = async () => {
 export const fetchClinics = createAsyncThunk(
   'clinics/fetchClinics',
   async () => {
+    const cachedClinics = await AsyncStorage.getItem('clinicList');
+    if (cachedClinics) {
+      const parsedClinics = JSON.parse(cachedClinics);
+      fetchFreshClinics();
+      return parsedClinics;
+    }
     const clinics = await fetchFreshClinics();
     return clinics;
   }

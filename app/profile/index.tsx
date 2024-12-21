@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, SafeAreaView, TextInput, ScrollView, Alert } from 'react-native';
 import FeatherIcon from 'react-native-vector-icons/Feather';
-import HorizontalLine from '../../components/common/HorizontalLine';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { useRouter } from 'expo-router';
@@ -29,6 +28,9 @@ const ProfileScreen = () => {
   const [emergencyContact, setEmergencyContact] = useState(profileData.emergencyContact || '');
   const [editingField, setEditingField] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showPersonalInfo, setShowPersonalInfo] = useState(false);
+  const [showAddress, setShowAddress] = useState(false);
+  const [showEmergencyContact, setShowEmergencyContact] = useState(false);
 
   useEffect(() => {
     const loadProfileData = async () => {
@@ -125,13 +127,29 @@ const ProfileScreen = () => {
     handleSave('dob', currentDate);
   };
 
+  const toggleSection = (section) => {
+    if (section === 'personal') {
+      setShowPersonalInfo(!showPersonalInfo);
+      setShowAddress(false);
+      setShowEmergencyContact(false);
+    } else if (section === 'address') {
+      setShowAddress(!showAddress);
+      setShowPersonalInfo(false);
+      setShowEmergencyContact(false);
+    } else if (section === 'emergency') {
+      setShowEmergencyContact(!showEmergencyContact);
+      setShowPersonalInfo(false);
+      setShowAddress(false);
+    }
+  };
+
   return (
     <SafeAreaView style={[styles.container, { paddingTop: 40 }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <FeatherIcon name="arrow-left" size={24} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Profile</Text>
+       
       </View>
       <View style={styles.profileSection}>
         <View style={styles.profileBackground}>
@@ -148,114 +166,144 @@ const ProfileScreen = () => {
         </View>
       </View>
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
-        <HorizontalLine />
-        <Text style={styles.sectionTitle}>Personal Information</Text>
-        <EditableField
-          value={fullName}
-          isEditing={editingField === 'fullName'}
-          onEdit={() => handleEdit('fullName')}
-          onSave={(value) => handleSave('fullName', value)}
-          iconColor="#007bff"
-          iconName="user"
-          label="Full Name"
-        />
-        <EditableField
-          value={dob.toDateString()}
-          isEditing={editingField === 'dob'}
-          onEdit={() => setShowDatePicker(true)}
-          onSave={(value) => handleSave('dob', value)}
-          iconColor="#ff6347"
-          iconName="calendar"
-          label="Date of Birth"
-        />
-        {showDatePicker && (
-          <DateTimePicker
-            value={dob}
-            mode="date"
-            display="default"
-            onChange={handleDateChange}
-          />
-        )}
-        <View style={styles.inputContainer}>
-          <View style={styles.inputWrapper}>
-            <View style={[styles.inputIconWrapper, { backgroundColor: '#32c759' }]}>
-              <FeatherIcon name="user-check" size={20} color="#fff" />
+        <View style={styles.sectionContainer}>
+          <TouchableOpacity onPress={() => toggleSection('personal')}>
+            <View style={styles.sectionHeader}>
+              <FeatherIcon name="user" size={20} color="#007bff" style={{ marginRight: 8 }} />
+              <Text style={styles.sectionTitle}>Personal Information</Text>
             </View>
-            <Picker
-              selectedValue={gender}
-              style={styles.picker}
-              onValueChange={(itemValue) => handleSave('gender', itemValue)}
-            >
-              <Picker.Item label="Select Gender" value="" />
-              <Picker.Item label="Male" value="male" />
-              <Picker.Item label="Female" value="female" />
-              <Picker.Item label="Other" value="other" />
-            </Picker>
-          </View>
+          </TouchableOpacity>
+          {showPersonalInfo && (
+            <>
+              <EditableField
+                value={fullName}
+                isEditing={editingField === 'fullName'}
+                onEdit={() => handleEdit('fullName')}
+                onSave={(value) => handleSave('fullName', value)}
+                iconColor="#007bff"
+                iconName="user"
+                label="Full Name"
+              />
+              <EditableField
+                value={dob.toDateString()}
+                isEditing={editingField === 'dob'}
+                onEdit={() => setShowDatePicker(true)}
+                onSave={(value) => handleSave('dob', value)}
+                iconColor="#ff6347"
+                iconName="calendar"
+                label="Date of Birth"
+              />
+              {showDatePicker && (
+                <DateTimePicker
+                  value={dob}
+                  mode="date"
+                  display="default"
+                  onChange={handleDateChange}
+                />
+              )}
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Gender</Text>
+                <View style={styles.inputWrapper}>
+                  <View style={[styles.inputIconWrapper, { backgroundColor: '#32c759' }]}>
+                    <FeatherIcon name="user-check" size={20} color="#fff" />
+                  </View>
+                  <Picker
+                    selectedValue={gender}
+                    style={styles.picker}
+                    onValueChange={(itemValue) => handleSave('gender', itemValue)}
+                  >
+                    <Picker.Item label="Select Gender" value="" />
+                    <Picker.Item label="Male" value="male" />
+                    <Picker.Item label="Female" value="female" />
+                    <Picker.Item label="Other" value="other" />
+                  </Picker>
+                </View>
+              </View>
+              <EditableField
+                value={phoneNumber}
+                isEditing={editingField === 'phoneNumber'}
+                onEdit={() => handleEdit('phoneNumber')}
+                onSave={(value) => handleSave('phoneNumber', value)}
+                iconColor="#007afe"
+                iconName="phone"
+                label="Phone Number"
+              />
+            </>
+          )}
         </View>
-        <EditableField
-          value={phoneNumber}
-          isEditing={editingField === 'phoneNumber'}
-          onEdit={() => handleEdit('phoneNumber')}
-          onSave={(value) => handleSave('phoneNumber', value)}
-          iconColor="#007afe"
-          iconName="phone"
-          label="Phone Number"
-        />
-        <HorizontalLine />
-        <Text style={styles.sectionTitle}>Address</Text>
-        <EditableField
-          value={address.street}
-          isEditing={editingField === 'street'}
-          onEdit={() => handleEdit('street')}
-          onSave={(value) => handleSave('street', value)}
-          iconColor="#007bff"
-          iconName="map-pin"
-          label="Street"
-        />
-        <EditableField
-          value={address.city}
-          isEditing={editingField === 'city'}
-          onEdit={() => handleEdit('city')}
-          onSave={(value) => handleSave('city', value)}
-          iconColor="#fe9400"
-          iconName="map"
-          label="City"
-        />
-        <EditableField
-          value={address.state}
-          isEditing={editingField === 'state'}
-          onEdit={() => handleEdit('state')}
-          onSave={(value) => handleSave('state', value)}
-          iconColor="#32c759"
-          iconName="map"
-          label="State"
-        />
-        <EditableField
-          value={address.zipCode}
-          isEditing={editingField === 'zipCode'}
-          onEdit={() => handleEdit('zipCode')}
-          onSave={(value) => handleSave('zipCode', value)}
-          iconColor="#007afe"
-          iconName="map-pin"
-          label="Zip Code"
-        />
-        <HorizontalLine />
-        <Text style={styles.sectionTitle}>Emergency Contact</Text>
-        <EditableField
-          value={emergencyContact}
-          isEditing={editingField === 'emergencyContact'}
-          onEdit={() => handleEdit('emergencyContact')}
-          onSave={(value) => handleSave('emergencyContact', value)}
-          iconColor="#ff6347"
-          iconName="phone-call"
-          label="Emergency Contact"
-        />
-        <HorizontalLine />
-        <TouchableOpacity style={styles.navigationButton} onPress={() => router.push('/insurance')}>
-          <Text style={styles.navigationButtonText}>Next: Insurance Provider</Text>
-          <FeatherIcon name="chevron-right" size={20} color="#007bff" />
-        </TouchableOpacity>
+        <View style={styles.sectionContainer}>
+          <TouchableOpacity onPress={() => toggleSection('address')}>
+            <View style={styles.sectionHeader}>
+              <FeatherIcon name="map-pin" size={20} color="#007bff" style={{ marginRight: 8 }} />
+              <Text style={styles.sectionTitle}>Address</Text>
+            </View>
+          </TouchableOpacity>
+          {showAddress && (
+            <>
+              <EditableField
+                value={address.street}
+                isEditing={editingField === 'street'}
+                onEdit={() => handleEdit('street')}
+                onSave={(value) => handleSave('street', value)}
+                iconColor="#007bff"
+                iconName="map-pin"
+                label="Street"
+              />
+              <EditableField
+                value={address.city}
+                isEditing={editingField === 'city'}
+                onEdit={() => handleEdit('city')}
+                onSave={(value) => handleSave('city', value)}
+                iconColor="#fe9400"
+                iconName="map"
+                label="City"
+              />
+              <EditableField
+                value={address.state}
+                isEditing={editingField === 'state'}
+                onEdit={() => handleEdit('state')}
+                onSave={(value) => handleSave('state', value)}
+                iconColor="#32c759"
+                iconName="map"
+                label="State"
+              />
+              <EditableField
+                value={address.zipCode}
+                isEditing={editingField === 'zipCode'}
+                onEdit={() => handleEdit('zipCode')}
+                onSave={(value) => handleSave('zipCode', value)}
+                iconColor="#007afe"
+                iconName="map-pin"
+                label="Zip Code"
+              />
+            </>
+          )}
+        </View>
+        <View style={styles.sectionContainer}>
+          <TouchableOpacity onPress={() => toggleSection('emergency')}>
+            <View style={styles.sectionHeader}>
+              <FeatherIcon name="phone-call" size={20} color="#007bff" style={{ marginRight: 8 }} />
+              <Text style={styles.sectionTitle}>Emergency Contact</Text>
+            </View>
+          </TouchableOpacity>
+          {showEmergencyContact && (
+            <EditableField
+              value={emergencyContact}
+              isEditing={editingField === 'emergencyContact'}
+              onEdit={() => handleEdit('emergencyContact')}
+              onSave={(value) => handleSave('emergencyContact', value)}
+              iconColor="#ff6347"
+              iconName="phone-call"
+              label="Emergency Contact"
+            />
+          )}
+        </View>
+        <View style={styles.sectionContainer}>
+          <TouchableOpacity style={styles.navigationButton} onPress={() => router.push('/insurance')}>
+            <Text style={styles.navigationButtonText}>Insurance Provider</Text>
+            <FeatherIcon name="chevron-right" size={20} color="#007bff" />
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -278,6 +326,7 @@ const EditableField = ({ value, isEditing, onEdit, onSave, iconColor, iconName, 
         <View style={[styles.inputIconWrapper, { backgroundColor: iconColor }]}>
           <FeatherIcon name={iconName} size={20} color="#fff" />
         </View>
+        <Text style={styles.inputLabel}>{label}</Text>
         <Text style={styles.inputValue}>{value || `Enter ${label}`}</Text>
         <TouchableOpacity onPress={onEdit}>
           <FeatherIcon name="edit-3" size={20} color={iconColor} />
@@ -299,7 +348,7 @@ const EditableField = ({ value, isEditing, onEdit, onSave, iconColor, iconName, 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f7f7f7',
+    backgroundColor: '#e0f7fa',
     // paddingTop: 40 is moved to the SafeAreaView inline style
   },
   scrollViewContent: {
@@ -311,7 +360,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     position: 'sticky',
     top: 0,
-    backgroundColor: '#f7f7f7',
+    backgroundColor: '#e0f7fa',
     zIndex: 1,
     paddingVertical: 10,
   },
@@ -359,7 +408,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     marginBottom: 16,
     backgroundColor: '#fff',
-    padding: 20, // Increased padding
+    padding: 12, // Reduced padding
     borderRadius: 8,
     shadowColor: '#000',
     shadowOpacity: 0.1,
@@ -385,16 +434,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
+    marginBottom: 0, // Remove margin below the label
+    flex: 1, // Allow label to take up available space
   },
   inputValue: {
     fontSize: 16,
     color: '#555',
+    flex: 2, // Allow value to take up more space
   },
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 8,
-    padding: 12, // Increased padding
+    padding: 8, // Reduced padding
     marginTop: 8,
   },
   sectionTitle: {
@@ -441,13 +493,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 16,
     borderRadius: 8,
-    backgroundColor: '#f2f2f2',
+    backgroundColor: '#7FFFD4',
     marginHorizontal: 8,
   },
   navigationButtonText: {
     fontSize: 16,
     color: '#007bff',
     marginHorizontal: 8,
+  },
+  sectionContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    marginHorizontal: 8,
+    marginVertical: 8,
+    padding: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 10,
   },
 });
 
