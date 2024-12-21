@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   StyleSheet,
@@ -12,11 +11,10 @@ import {
   Modal,
 } from 'react-native';
 import FeatherIcon from 'react-native-vector-icons/Feather';
-import usePatientProfile from '../../hooks/usePatientProfile';
-import InsuranceScreen from '../insurance';
 import { useRouter } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectUser } from '../(redux)/authSlice';
+import InsuranceScreen from '../insurance';
 
 interface FormState {
   darkMode: boolean;
@@ -27,7 +25,7 @@ interface FormState {
 const Settings: React.FC = () => {
   const dispatch = useDispatch();
   const { profileImage, name, userId } = useSelector(selectUser);
-  const { patientProfile, pickImage, handleProfileChange } = usePatientProfile();
+  const profileData = useSelector((state) => state.auth.profileData); // Get profile data from Redux
   const router = useRouter();
   const [form, setForm] = useState<FormState>({
     darkMode: false,
@@ -56,8 +54,8 @@ const Settings: React.FC = () => {
               )}
             </View>
             <View>
-              <Text style={styles.profileName}>{patientProfile.fullName}</Text>
-              <Text style={styles.profileEmail}>{patientProfile.email}</Text>
+              <Text style={styles.profileName}>{profileData.fullName}</Text>
+              <Text style={styles.profileEmail}>{profileData.email}</Text>
             </View>
             <View style={styles.rowSpacer} />
             <FeatherIcon color="#C6C6C6" name="chevron-right" size={20} />

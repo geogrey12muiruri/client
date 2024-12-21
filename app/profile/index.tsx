@@ -126,7 +126,7 @@ const ProfileScreen = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { paddingTop: 20 }]}>
+    <SafeAreaView style={[styles.container, { paddingTop: 40 }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <FeatherIcon name="arrow-left" size={24} color="#000" />
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f7f7f7',
-    // paddingTop: 20 is moved to the SafeAreaView inline style
+    // paddingTop: 40 is moved to the SafeAreaView inline style
   },
   scrollViewContent: {
     padding: 20,
