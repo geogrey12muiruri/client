@@ -171,6 +171,7 @@ const ProfileScreen = () => {
             <View style={styles.sectionHeader}>
               <FeatherIcon name="user" size={20} color="#007bff" style={{ marginRight: 8 }} />
               <Text style={styles.sectionTitle}>Personal Information</Text>
+              <FeatherIcon name={showPersonalInfo ? "chevron-up" : "chevron-down"} size={20} color="#007bff" />
             </View>
           </TouchableOpacity>
           {showPersonalInfo && (
@@ -236,6 +237,7 @@ const ProfileScreen = () => {
             <View style={styles.sectionHeader}>
               <FeatherIcon name="map-pin" size={20} color="#007bff" style={{ marginRight: 8 }} />
               <Text style={styles.sectionTitle}>Address</Text>
+              <FeatherIcon name={showAddress ? "chevron-up" : "chevron-down"} size={20} color="#007bff" />
             </View>
           </TouchableOpacity>
           {showAddress && (
@@ -284,6 +286,7 @@ const ProfileScreen = () => {
             <View style={styles.sectionHeader}>
               <FeatherIcon name="phone-call" size={20} color="#007bff" style={{ marginRight: 8 }} />
               <Text style={styles.sectionTitle}>Emergency Contact</Text>
+              <FeatherIcon name={showEmergencyContact ? "chevron-up" : "chevron-down"} size={20} color="#007bff" />
             </View>
           </TouchableOpacity>
           {showEmergencyContact && (
@@ -431,14 +434,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   inputLabel: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 14, // Reduced font size
+    fontWeight: '500', // Reduced font weight
     color: '#333',
     marginBottom: 0, // Remove margin below the label
     flex: 1, // Allow label to take up available space
   },
   inputValue: {
-    fontSize: 16,
+    fontSize: 14, // Reduced font size
     color: '#555',
     flex: 2, // Allow value to take up more space
   },
@@ -450,8 +453,8 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 16, // Reduced font size
+    fontWeight: '500', // Reduced font weight
     marginVertical: 8,
     color: '#333',
     marginHorizontal: 10, // Add margin to the sides
