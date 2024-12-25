@@ -28,7 +28,7 @@ const NotificationsScreen: React.FC = () => {
       <TouchableOpacity style={styles.card} onPress={() => handleViewAppointment(item._id)}>
         <Image source={{ uri: doctor.profileImage }} style={styles.image} />
         <View style={styles.cardContent}>
-          <Text style={styles.name}>Dr. {doctor.firstName || 'N/A'} {doctor.lastName || 'N/A'}</Text>
+          <Text style={styles.name}>Dr. {doctor.firstName || ''} {doctor.lastName || 'N/A'}</Text>
           <Text style={styles.count}>{item.status}</Text>
           <Text style={styles.time}>{item.time}</Text>
           <TouchableOpacity

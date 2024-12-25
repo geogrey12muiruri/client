@@ -9,11 +9,12 @@ import 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import queryClient from "./(services)/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
-import store from "./(redux)/store";
-import { Provider, useDispatch } from "react-redux";
+
+import { Provider, useDispatch as useReduxDispatch } from "react-redux";
 import { loadUser } from "./(redux)/authSlice";
 import { PaperProvider } from 'react-native-paper'; // Import PaperProvider
 import { AuthProvider } from '../context/AuthContext'; // Import AuthProvider
+import store, { AppDispatch } from "./(redux)/store"; // Import AppDispatch
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -24,7 +25,7 @@ function RootLayout() {
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
-  const dispatch = useDispatch();
+  const dispatch = useReduxDispatch<AppDispatch>();
 
   useEffect(() => {
     if (loaded) {

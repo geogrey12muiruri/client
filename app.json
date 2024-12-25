@@ -19,8 +19,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        
+        "foregroundImage": "./assets/adaptive-icon.png"
       },
       "package": "medplus.company.app"
     },
@@ -30,6 +29,11 @@
     },
     "plugins": [
       "expo-router"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "e9bb7c94-7804-4f46-930f-2243a5c33175"
+      }
+    }
   }
 }
