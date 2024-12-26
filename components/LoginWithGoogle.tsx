@@ -64,7 +64,7 @@ const LoginWithGoogle: React.FC<LoginWithGoogleProps> = ({ onLoginSuccess }) => 
             });
             const data = await response.json();
             console.log('user profile', data);
-            sendGoogleUserDataToBackend(data); // Send user data to backend
+            sendGoogleUserDataToBackend(data); 
         } catch (error) {
             console.log('error', error);
         }
@@ -115,6 +115,6 @@ const styles = StyleSheet.create({
     },
     googleImage: {
         height: 35,
-        width: 35, // Adjusted width to match height
+        width: 35,
     },
 });

@@ -19,6 +19,7 @@ import { registerUser } from "../(services)/api/api";
 import axios from "axios";
 import Loader from "../../components/Loader";
 import LoginWithGoogle from '../../components/LoginWithGoogle';
+import { theme } from "@/constants/theme";
 
 interface RegisterValues {
   email: string;
@@ -79,7 +80,7 @@ export default function Register() {
   const imageUrl = "https://res.cloudinary.com/dws2bgxg4/image/upload/v1734385887/loginp_ovgecg.png"; // Replace with your Cloudinary URL
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+    <View style={{ flex: 1, backgroundColor: theme.colors.backgroundColor }}>
       <Loader loading={loading} />
       <ScrollView
         keyboardShouldPersistTaps="handled"

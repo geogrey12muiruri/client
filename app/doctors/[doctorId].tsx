@@ -98,11 +98,11 @@ const DoctorProfile: React.FC = () => {
         <View style={styles.infoContainer}>
           <View style={styles.infoCard}>
             <Ionicons name="person" size={20} color={Colors.primary} />
-            <Text style={styles.infoText}>{doctor.user.yearsOfExperience || 'N/A'} Years of Experience</Text>
+            <Text style={styles.infoText}>{doctor.yearsOfExperience || 'N/A'} Years of Experience</Text>
           </View>
           <View style={styles.infoCard}>
             <Ionicons name="people" size={20} color={Colors.primary} />
-            <Text style={styles.infoText}>{doctor.user.numberOfPatients || 'N/A'} Patients</Text>
+            <Text style={styles.infoText}>{doctor.numberOfPatients || 'N/A'} Patients</Text>
           </View>
         </View>
         <BookingSection

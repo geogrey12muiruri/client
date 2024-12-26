@@ -15,6 +15,7 @@ import { useRouter } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectUser } from '../(redux)/authSlice';
 import InsuranceScreen from '../insurance';
+import { theme } from '@/constants/theme';
 
 interface FormState {
   darkMode: boolean;
@@ -39,7 +40,7 @@ const Settings: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#e0f7fa' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.backgroundColor, }}>
       <ScrollView>
         <View style={styles.section}>
           <Text style={styles.rowLabel}>Patient Profile</Text>

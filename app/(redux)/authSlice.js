@@ -73,24 +73,24 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     loginAction: (state, action) => {
-      state.user = {
+      const userData = {
+        userId: action.payload.id,
         email: action.payload.email,
-        firstName: action.payload.firstName,
-        lastName: action.payload.lastName,
-        userId: action.payload.userId, // Ensure userId is set correctly
+        username: action.payload.username,
         token: action.payload.token,
-        username: action.payload.username // Include username
       };
-      state.name = action.payload.firstName + ' ' + action.payload.lastName;
+      
+      state.user = userData;
+      state.name = action.payload.username; // Assuming the username is used as the name
       state.email = action.payload.email;
-      state.userId = action.payload.userId; // Ensure userId is set correctly
-      state.userType = action.payload.userType;
+      state.userId = action.payload.id; // Store the correct userId
       state.isAuthenticated = true;
-      state.professional = action.payload.professional || null;
-      state.profileImage = action.payload.profileImage || null;
       state.loading = false;
-      AsyncStorage.setItem("userInfo", JSON.stringify(state.user));
+    
+      // Save the user data to AsyncStorage
+      AsyncStorage.setItem("userInfo", JSON.stringify(userData));
     },
+    
     logoutAction: (state) => {
       Object.assign(state, initialState); // Reset state to initial values
       AsyncStorage.removeItem("userInfo");

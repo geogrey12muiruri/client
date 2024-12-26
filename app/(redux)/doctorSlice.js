@@ -1,47 +1,23 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
 // Async thunk to fetch doctors
 export const fetchDoctors = createAsyncThunk(
   'doctors/fetchDoctors',
-  async (_, { dispatch }) => {
-    const cachedDoctors = await AsyncStorage.getItem('doctorList');
-    if (cachedDoctors) {
-      const parsedDoctors = JSON.parse(cachedDoctors);
-      fetchFreshDoctors();
-      return parsedDoctors;
-    }
-    const response = await axios.get('https://medplus-health.onrender.com/api/professionals');
-    
-    // Transform response to include insurance companies from the clinic
-    const doctorsWithInsurance = response.data.map((doctor) => ({
-      ...doctor,
-      clinic: doctor.clinicId,  // Attach the entire clinic object here
-    }));
-    
-    await AsyncStorage.setItem('doctorList', JSON.stringify(doctorsWithInsurance));
-    return doctorsWithInsurance;
-  }
-);
-
-const fetchFreshDoctors = async () => {
-  try {
+  async () => {
     const response = await axios.get('https://medplus-health.onrender.com/api/professionals');
     const doctorsWithInsurance = response.data.map((doctor) => ({
       ...doctor,
       clinic: doctor.clinicId,
     }));
-    await AsyncStorage.setItem('doctorList', JSON.stringify(doctorsWithInsurance));
-  } catch (error) {
-    console.error('Failed to fetch fresh doctors', error);
+    return doctorsWithInsurance;
   }
-};
+);
 
 // Initial state
 const initialState = {
   doctorList: [],
-  selectedDoctor: null,  // Initialize as null
+  selectedDoctor: null,
   loading: false,
   error: null,
 };
@@ -52,9 +28,7 @@ const doctorsSlice = createSlice({
   initialState,
   reducers: {
     setSelectedDoctor(state, action) {
-      console.log('Setting selected doctor with ID:', action.payload); // Debugging log
       state.selectedDoctor = state.doctorList.find((doctor) => doctor._id === action.payload) || null;
-      console.log('Selected doctor:', state.selectedDoctor); // Debugging log
     },
     clearSelectedDoctor(state) {
       state.selectedDoctor = null;

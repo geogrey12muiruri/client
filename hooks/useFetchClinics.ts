@@ -2,13 +2,23 @@ import { useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import { setClinics, selectClinics, setLoading, setError, setClinicImages } from '../app/store/clinicSlice';
+import { setClinics, selectClinics, setLoading, setError, setClinicImages } from '../app/(redux)/clinicSlice';
 
-// Fetch fresh clinics from the API
-const fetchFreshClinics = async () => {
+interface Clinic {
+  _id: string;
+  name: string;
+  address: string;
+  images: string[];
+}
+
+interface ClinicImageResponse {
+  urls: string[];
+}
+
+const fetchFreshClinics = async (): Promise<Clinic[]> => {
   try {
     const response = await axios.get('https://medplus-health.onrender.com/api/clinics');
-    return response.data.map(clinic => ({
+    return response.data.map((clinic: Clinic) => ({
       ...clinic,
       images: clinic.images || [],
     }));
@@ -18,12 +28,11 @@ const fetchFreshClinics = async () => {
   }
 };
 
-// Fetch images for a specific clinic
-const fetchClinicImages = async (clinicId) => {
+const fetchClinicImages = async (clinicId: string): Promise<string[]> => {
   try {
     const response = await axios.get(`https://medplus-health.onrender.com/api/images/clinic/${clinicId}`);
     if (response.data && Array.isArray(response.data)) {
-      return response.data.flatMap(image => image.urls);
+      return response.data.flatMap((image: ClinicImageResponse) => image.urls);
     } else {
       console.error('Invalid response format:', response.data);
       return [];
@@ -34,11 +43,10 @@ const fetchClinicImages = async (clinicId) => {
   }
 };
 
-// Custom hook to fetch clinics and their images
 const useFetchClinics = () => {
   const dispatch = useDispatch();
   const clinics = useSelector(selectClinics);
-  const clinicImages = useSelector(state => state.clinics.clinicImages);
+  const clinicImages = useSelector((state: any) => state.clinics.clinicImages);
 
   useEffect(() => {
     const fetchClinics = async () => {
@@ -66,7 +74,7 @@ const useFetchClinics = () => {
   }, [clinics.length, dispatch]);
 
   const getClinicImages = useCallback(
-    async (clinicId) => {
+    async (clinicId: string): Promise<string[]> => {
       if (clinicImages[clinicId]) {
         return clinicImages[clinicId];
       }

@@ -18,12 +18,11 @@ import { loginUser } from "../(services)/api/api";
 import { useDispatch } from 'react-redux';
 import { loginAction } from '../(redux)/authSlice';
 
-
 import CustomButton from '../../components/CustomButton';
 import InputField from '../../components/InputField';
 import LoginWithGoogle from '../../components/LoginWithGoogle';
+import { theme } from '@/constants/theme';
 
-// Define the validation schema using Yup
 const LoginSchema = Yup.object().shape({
   email: Yup.string().email('Invalid email').required('Required'),
   password: Yup.string().min(6, 'Too Short!').required('Required'),
@@ -70,7 +69,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
 
-  const imageUrl = "https://res.cloudinary.com/dws2bgxg4/image/upload/v1734385887/loginp_ovgecg.png"; // Replace with your Cloudinary URL
+  const imageUrl = "https://res.cloudinary.com/dws2bgxg4/image/upload/v1734385887/loginp_ovgecg.png";
 
   const screenWidth = Dimensions.get('window').width;
 
@@ -79,13 +78,13 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
       if (!imageLoaded) {
         setImageError(true);
       }
-    }, 6000); // 6000ms timeout
+    }, 6000);
 
     return () => clearTimeout(timer);
   }, [imageLoaded]);
 
   return (
-    <SafeAreaView style={{ flex: 1, justifyContent: 'center' }}>
+    <SafeAreaView style={{ flex: 1, justifyContent: 'center', backgroundColor: theme.colors.backgroundColor }}>
       <View style={{ paddingHorizontal: 25 }}>
         <View style={{ alignItems: 'center' }}>
           {!imageLoaded && !imageError && (

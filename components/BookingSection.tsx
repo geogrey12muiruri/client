@@ -30,6 +30,7 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
   const [selectedInsurance, setSelectedInsurance] = useState<string>(initialSelectedInsurance);
 
   const user = useSelector(selectUser);
+  console.log(user)
   const { name, email, userId } = user;
   const userEmail = email;
   const patientName = name;
@@ -71,30 +72,29 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
   }, [schedule]);
 
   const handleBookPress = async () => {
-    if (!selectedTimeSlot) {
-      Alert.alert('Error', 'Please select a time slot.');
+    if (!selectedTimeSlot && !selectedInsurance) {
+      Alert.alert('Error', 'Please select a time slot or insurance.');
       return;
     }
-
   
-    const selectedDateTime = moment(`${moment(selectedDate).format('YYYY-MM-DD')} ${selectedTimeSlot.time.split(' - ')[0]}`, 'YYYY-MM-DD HH:mm');
-    if (selectedDateTime.isBefore(moment())) {
+    const selectedDateTime = moment(`${moment(selectedDate).format('YYYY-MM-DD')} ${selectedTimeSlot?.time.split(' - ')[0]}`, 'YYYY-MM-DD HH:mm');
+    if (selectedTimeSlot && selectedDateTime.isBefore(moment())) {
       Alert.alert('Error', 'Cannot book an appointment in the past.');
       return;
     }
-
+  
     if (isSubmitting) {
       return;
     }
-
+  
     console.log('Selected Time Slot:', selectedTimeSlot); // Add this line to log selectedTimeSlot
-
+  
     setIsSubmitting(true);
     setShowAlert(false);
     setAlertMessage('');
     setAlertType('success');
     let subaccountCode: string | null = null;
-
+  
     const fetchSubaccountCode = async (doctorId: string) => {
       try {
         const response = await axios.get(`https://medplus-health.onrender.com/api/subaccount/${doctorId}`);
@@ -108,38 +108,48 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
         console.error('Failed to fetch subaccount code:', error);
       }
     };
-
+  
     await fetchSubaccountCode(doctorId); // Use doctorId to fetch the subaccount code
-
+  
     try {
       if (!subaccountCode || !userEmail) {
         throw new Error('Missing subaccount code or user email.');
       }
-
-      const appointmentResponse = await axios.post('https://medplus-health.onrender.com/api/appointments', {
+  
+      const appointmentData = {
         doctorId: doctorId,
         userId: userId,
         patientName: patientName,
-        date: moment(selectedDate).format('YYYY-MM-DD'), 
-        timeSlotId: selectedTimeSlot.id, // Ensure timeSlotId is included
-        time: selectedTimeSlot.time,
-        status: selectedInsurance ? 'pending' : 'pending',
-        insurance: selectedInsurance, // Include insurance in the appointment data
-      });
-
+        date: moment(selectedDate).format('YYYY-MM-DD'),
+        timeSlotId: selectedTimeSlot?.id || null,
+        time: selectedTimeSlot?.time || null,
+        status: 'pending',
+        insurance: selectedInsurance,
+      };
+  
+      // Provide default values if booking with insurance
+      if (selectedInsurance) {
+        appointmentData.timeSlotId = appointmentData.timeSlotId || 'defaultTimeSlotId';
+        appointmentData.time = appointmentData.time || 'defaultTime';
+      }
+  
+      const appointmentResponse = await axios.post('https://medplus-health.onrender.com/api/appointments', appointmentData);
+  
       const newAppointmentId = appointmentResponse.data.appointment._id; // Ensure correct path to appointment ID
       if (!newAppointmentId) {
         throw new Error('Failed to retrieve appointmentId from response');
       }
       console.log('New appointment ID:', newAppointmentId); // Log the appointmentId from the response
       setAppointmentId(newAppointmentId);
-
+  
       // Log the state after setting the appointmentId
       console.log('State after setting appointmentId:', { appointmentId: newAppointmentId });
-
-      // Update the slot to booked in the local state
-      updateSlot(selectedTimeSlot.id, { isBooked: true });
-
+  
+      // Update the slot to booked in the local state if time slot is selected
+      if (selectedTimeSlot) {
+        updateSlot(selectedTimeSlot.id, { isBooked: true });
+      }
+  
       if (selectedInsurance) {
         setAlertMessage('Appointment booked successfully with insurance.');
         setAlertType('success');
@@ -147,7 +157,7 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
         setIsSubmitting(false);
         return;
       }
-
+  
       const paymentResponse = await axios.post(
         'https://api.paystack.co/transaction/initialize',
         {
@@ -157,7 +167,7 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
           currency: 'KES',
           metadata: {
             appointmentId: newAppointmentId,
-            timeSlotId: selectedTimeSlot.id,
+            timeSlotId: selectedTimeSlot?.id || null,
           },
         },
         {
@@ -167,7 +177,7 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
           },
         }
       );
-
+  
       if (paymentResponse.data.status) {
         if (paystackWebViewRef.current) {
           paystackWebViewRef.current.startTransaction();
@@ -175,7 +185,7 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
       } else {
         throw new Error('Payment initialization failed');
       }
-
+  
       setIsSubmitting(false);
     } catch (error) {
       console.error('Failed to book appointment:', error);

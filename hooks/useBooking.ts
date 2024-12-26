@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
-import { RootState } from '../app/store/configureStore'; // Adjust path according to your store file
-import * as paystackProps from 'react-native-paystack-webview';
+import { RootState } from '../app/(redux)/store'; // Adjust path according to your store file
+import { Paystack, paystackProps } from 'react-native-paystack-webview';
 
 interface BookingHook {
   isSubmitting: boolean;
@@ -30,7 +30,7 @@ const useBooking = (userId: string): BookingHook => {
   const [appointmentId, setAppointmentId] = useState<string | null>(null);
   const [subaccountCode, setSubaccountCode] = useState<string | null>(null);
 
-  const user = useSelector((state: RootState) => state.user);
+  const user = useSelector((state: RootState) => state.auth.user);
 
   useEffect(() => {
     console.log('useEffect triggered with userId:', userId);

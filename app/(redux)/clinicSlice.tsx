@@ -78,12 +78,14 @@ const fetchFreshClinics = async () => {
 
 export const fetchClinics = createAsyncThunk(
   'clinics/fetchClinics',
-  async () => {
+  async (_, { dispatch }) => {
     const cachedClinics = await AsyncStorage.getItem('clinicList');
     if (cachedClinics) {
       const parsedClinics = JSON.parse(cachedClinics);
-      fetchFreshClinics();
-      return parsedClinics;
+      // Fetch fresh data and update AsyncStorage and Redux store
+      const freshClinics = await fetchFreshClinics();
+      dispatch(setClinics(freshClinics));
+      return freshClinics;
     }
     const clinics = await fetchFreshClinics();
     return clinics;
@@ -141,6 +143,12 @@ const clinicsSlice = createSlice({
       state.selectedClinic = null;
       state.clinicImages = {};
     },
+    setLoading: (state, action: PayloadAction<boolean>) => {
+      state.loading = action.payload;
+    },
+    setError: (state, action: PayloadAction<string | null>) => {
+      state.error = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -163,7 +171,7 @@ const clinicsSlice = createSlice({
   },
 });
 
-export const { setClinics, setSelectedClinic, setClinicImages, filterClinics, resetClinics } = clinicsSlice.actions;
+export const { setClinics, setSelectedClinic, setClinicImages, filterClinics, resetClinics, setLoading, setError } = clinicsSlice.actions;
 
 // Update selectors to use the correct state structure
 export const selectClinics = (state: any) => state.clinics.filteredClinicList;

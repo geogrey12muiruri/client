@@ -4,6 +4,7 @@ import Clinics from '../../components/client/Clinics';
 import Doctors from '../../components/client/Doctors';
 import Category from '../../components/client/Category';
 import SearchBar from '../../components/client/SearchBar';
+import { theme } from '@/constants/theme';
 
 const Index: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -39,7 +40,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#f7f39a',
+    backgroundColor: theme.colors.backgroundColor,
   },
   heading: {
     fontSize: 24,

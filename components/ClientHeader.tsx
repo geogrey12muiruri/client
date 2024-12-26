@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import { logoutAction, selectUser, setProfileImage } from '../app/(redux)/authSlice'; // Import setProfileImage
+import { logoutAction, selectUser, setProfileImage } from '../app/(redux)/authSlice'; 
 import { useRouter } from 'expo-router';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Colors from './Shared/Colors';
@@ -23,10 +23,10 @@ const ClientHeader: React.FC<{ title: string }> = ({ title }) => {
   }, [dispatch, userId]);
 
   const handleLogout = async () => {
-    await AsyncStorage.removeItem('userInfo'); // Ensure user info is removed from storage
-    await AsyncStorage.removeItem('profileImage'); // Ensure profile image is removed from storage
+    await AsyncStorage.removeItem('userInfo'); 
+    await AsyncStorage.removeItem('profileImage'); 
     dispatch(logoutAction());
-    router.push('/auth/login'); // Use replace instead of push to ensure navigation
+    router.push('/auth/login'); 
   };
 
   return (
@@ -55,12 +55,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: Colors.ligh_gray,
+    backgroundColor: '#a3de83',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    paddingTop: 24,
+    paddingTop: 30,
     elevation: 4,
-    padding: 16, // Added padding
+    padding: 16, 
   },
   leftSection: {
     flexDirection: 'row',

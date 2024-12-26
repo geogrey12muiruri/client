@@ -7,7 +7,7 @@ export const AuthContext = createContext<any>(null);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const dispatch = useDispatch();
-  const userState = useSelector((state: RootState) => state.auth.user); // Access user from auth slice
+  const userState = useSelector((state: RootState) => state.auth.user); 
   const [user, setUser] = useState(userState);
 
   useEffect(() => {
