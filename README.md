@@ -1,161 +1,227 @@
-import React, { useState } from 'react';
 import {
-  SafeAreaView,
-  View,
-  Text,
-  TouchableOpacity,
+  FlatList,
   StyleSheet,
-  ScrollView,
+  Text,
+  useWindowDimensions,
+  View,
+  ViewToken,
+  TouchableOpacity,
 } from 'react-native';
-import { TextInput } from 'react-native-paper';
-import FeatherIcon from 'react-native-vector-icons/Feather';
+import Animated, {
+  Extrapolate,
+  interpolate,
+  SharedValue,
+  useAnimatedRef,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
+import { useNavigation } from '@react-navigation/native';
 
-const InsuranceScreen = () => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [insuranceData, setInsuranceData] = useState({
-    insuranceProvider: 'HealthPlus',
-    insuranceNumber: '123-456-789',
-    policyholderName: 'John Doe',
-    effectiveDate: '2024-01s-01',
-    expirationDate: '2025-01-01',
+import { theme } from '../../constants/theme';
+import { data, type Data } from '../../data/screens';
+import { Pagination } from '@/components/Pagination';
+import { Button } from '@/components/Button';
+
+const RenderItem = ({
+  item,
+  index,
+  x,
+  flatListRef,
+  flatListIndex,
+  dataLength,
+  onLastScreen,
+}: {
+  item: Data;
+  index: number;
+  x: SharedValue<number>;
+  flatListRef: RefObject<FlatList>;
+  flatListIndex: SharedValue<number>;
+  dataLength: number;
+  onLastScreen: () => void;
+}) => {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const navigation = useNavigation();
+
+  const imageAnimatedStyle = useAnimatedStyle(() => {
+    const opacityAnimation = interpolate(
+      x.value,
+      [
+        (index - 1) * SCREEN_WIDTH,
+        index * SCREEN_WIDTH,
+        (index + 1) * SCREEN_WIDTH,
+      ],
+      [0, 1, 0],
+      Extrapolate.CLAMP
+    );
+
+    const translateYAnimation = interpolate(
+      x.value,
+      [
+        (index - 1) * SCREEN_WIDTH,
+        index * SCREEN_WIDTH,
+        (index + 1) * SCREEN_WIDTH,
+      ],
+      [100, 0, 100],
+      Extrapolate.CLAMP
+    );
+
+    return {
+      width: SCREEN_WIDTH * 0.8,
+      height: SCREEN_WIDTH * 0.8,
+      opacity: opacityAnimation,
+      transform: [{ translateY: translateYAnimation }],
+    };
   });
 
-  const handleUpdate = (field, value) => {
-    setInsuranceData({ ...insuranceData, [field]: value });
-  };
+  const textAnimatedStyle = useAnimatedStyle(() => {
+    const opacityAnimation = interpolate(
+      x.value,
+      [
+        (index - 1) * SCREEN_WIDTH,
+        index * SCREEN_WIDTH,
+        (index + 1) * SCREEN_WIDTH,
+      ],
+      [0, 1, 0],
+      Extrapolate.CLAMP
+    );
+
+    const translateYAnimation = interpolate(
+      x.value,
+      [
+        (index - 1) * SCREEN_WIDTH,
+        index * SCREEN_WIDTH,
+        (index + 1) * SCREEN_WIDTH,
+      ],
+      [100, 0, 100],
+      Extrapolate.CLAMP
+    );
+
+    return {
+      opacity: opacityAnimation,
+      transform: [{ translateY: translateYAnimation }],
+    };
+  });
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.headerTitle}>Insurance Information</Text>
-      <View style={styles.card}>
-        <View style={styles.cardContent}>
-          <Text style={styles.cardLabel}>Provider:</Text>
-          <Text style={styles.cardValue}>{insuranceData.insuranceProvider}</Text>
-        </View>
-        <View style={styles.cardContent}>
-          <Text style={styles.cardLabel}>Policy Number:</Text>
-          <Text style={styles.cardValue}>{insuranceData.insuranceNumber}</Text>
-        </View>
-        <View style={styles.cardContent}>
-          <Text style={styles.cardLabel}>Policyholder:</Text>
-          <Text style={styles.cardValue}>{insuranceData.policyholderName}</Text>
-        </View>
-        <TouchableOpacity
-          onPress={() => setIsEditing(!isEditing)}
-          style={styles.updateButton}
-        >
-          <Text style={styles.updateButtonText}>
-            {isEditing ? 'Save Changes' : 'Update Provider'}
-          </Text>
-        </TouchableOpacity>
-        {isEditing && (
-          <ScrollView style={styles.editSection}>
-            <EditableField
-              label="Insurance Provider"
-              value={insuranceData.insuranceProvider}
-              onChangeText={(value) => handleUpdate('insuranceProvider', value)}
-            />
-            <EditableField
-              label="Insurance Number"
-              value={insuranceData.insuranceNumber}
-              onChangeText={(value) => handleUpdate('insuranceNumber', value)}
-            />
-            <EditableField
-              label="Policyholder Name"
-              value={insuranceData.policyholderName}
-              onChangeText={(value) => handleUpdate('policyholderName', value)}
-            />
-            <EditableField
-              label="Effective Date"
-              value={insuranceData.effectiveDate}
-              onChangeText={(value) => handleUpdate('effectiveDate', value)}
-            />
-            <EditableField
-              label="Expiration Date"
-              value={insuranceData.expirationDate}
-              onChangeText={(value) => handleUpdate('expirationDate', value)}
-            />
-          </ScrollView>
-        )}
-      </View>
-    </SafeAreaView>
+    <View style={[styles.itemContainer, { width: SCREEN_WIDTH }]}>
+      <Animated.Image source={item.image} style={imageAnimatedStyle} />
+
+      <Animated.View style={textAnimatedStyle}>
+        <Text style={styles.itemTitle}>{item.title}</Text>
+        <Text style={styles.itemText}>{item.text}</Text>
+        
+      </Animated.View>
+    </View>
   );
 };
 
-const EditableField = ({ label, value, onChangeText }) => (
-  <View style={styles.editableField}>
-    <Text style={styles.fieldLabel}>{label}:</Text>
-    <TextInput
-      value={value}
-      onChangeText={onChangeText}
-      style={styles.fieldInput}
-    />
-  </View>
-);
+const onViewableItemsChanged = (flatListIndex: SharedValue<number>) => ({
+  viewableItems,
+}: {
+  viewableItems: Array<ViewToken>;
+}) => {
+  if (viewableItems.length > 0) {
+    flatListIndex.value = viewableItems[0].index ?? 0;
+  }
+};
+
+export default function Onboarding() {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const flatListRef = useAnimatedRef<FlatList>();
+  const navigation = useNavigation();
+
+  const flatListIndex = useSharedValue(0);
+  const x = useSharedValue(0);
+
+  const onScroll = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      x.value = event.contentOffset.x;
+    },
+  });
+
+  return (
+    <View style={styles.container}>
+      <Animated.FlatList
+        ref={flatListRef as any}
+        data={data}
+        keyExtractor={(item) => String(item.id)}
+        renderItem={({ item, index }) => (
+          <RenderItem
+            index={index}
+            item={item}
+            x={x}
+            flatListRef={flatListRef}
+            flatListIndex={flatListIndex}
+            dataLength={data.length}
+            onLastScreen={() => navigation.navigate('auth/login')}
+          />
+        )}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        bounces={false}
+        pagingEnabled
+        onViewableItemsChanged={onViewableItemsChanged(flatListIndex)}
+      />
+
+      <View style={styles.footerContainer}>
+        <Pagination data={data} screenWidth={SCREEN_WIDTH} x={x} />
+
+        <Button
+          flatListRef={flatListRef}
+          flatListIndex={flatListIndex}
+          dataLength={data.length}
+          onLastScreen={() => navigation.navigate('auth/login')}
+        />
+      </View>
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-    padding: 16,
+    backgroundColor: theme.colors.backgroundColor,
+    
   },
-  headerTitle: {
+  itemContainer: {
+    flex: 1,
+    backgroundColor: theme.colors.backgroundColor,
+    marginTop: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20, 
+  },
+  itemTitle: {
+    color: theme.colors.textColor,
     fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: 16,
     textAlign: 'center',
+    marginBottom: 10,
   },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
+  itemText: {
+    color: theme.colors.textColor,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginHorizontal: 30,
   },
-  cardContent: {
+  footerContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  cardLabel: {
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  cardValue: {
-    fontSize: 16,
-    color: '#333',
-  },
-  updateButton: {
-    backgroundColor: '#007bff',
-    borderRadius: 6,
-    paddingVertical: 10,
     alignItems: 'center',
+    justifyContent: 'space-between',
+    margin: 20,
   },
-  updateButtonText: {
-    color: '#fff',
+  getStartedButton: {
+    backgroundColor: '#AD40AF',
+          padding: 20,
+          borderRadius: 10,
+          marginBottom: 30,
+  },
+  getStartedButtonText: {
+    color: theme.colors.textHighlightColor,
     fontSize: 16,
     fontWeight: 'bold',
   },
-  editSection: {
-    marginTop: 16,
-  },
-  editableField: {
-    marginBottom: 12,
-  },
-  fieldLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  fieldInput: {
-    backgroundColor: '#f0f0f0',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 14,
-  },
 });
-
-export default InsuranceScreen;

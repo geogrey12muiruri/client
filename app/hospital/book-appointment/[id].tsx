@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, FlatList, ActivityIndicator, TouchableOpacity, Image, StyleSheet, ScrollView, Animated } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, TouchableOpacity, Image, StyleSheet, ScrollView, Animated, StatusBar } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'expo-router';
@@ -15,8 +15,6 @@ const BookAppointment = () => {
   const clinicId = Array.isArray(id) ? id[0] : id;
   const selectedProfessional = professionalParam ? JSON.parse(professionalParam) : null;
 
-  const scrollViewRef = useRef<ScrollView>(null);
-  const bookingSectionRef = useRef<View>(null);
   const router = useRouter();
   const dispatch = useDispatch<any>();
 
@@ -33,10 +31,6 @@ const BookAppointment = () => {
       dispatch(fetchClinicById(clinicId));
     }
   }, [clinicId, dispatch]);
-
-  useEffect(() => {
-    console.log('Clinic Data:', clinic);
-  }, [clinic]);
 
   useEffect(() => {
     if (clinicImages.length > 0) {
@@ -65,15 +59,6 @@ const BookAppointment = () => {
       }
     }
   }, [clinicImages, imageFadeAnim]);
-
-  const handleBookPress = () => {
-    if (bookingSectionRef.current && scrollViewRef.current) {
-      scrollViewRef.current.scrollTo({
-        y: bookingSectionRef.current.offsetTop,
-        animated: true,
-      });
-    }
-  };
 
   const handleConsult = (doctorId: string) => {
     router.push(`/doctors/${doctorId}`);
@@ -128,135 +113,136 @@ const BookAppointment = () => {
     : (clinic.bio ? clinic.bio.split(" ").slice(0, 18).join(" ") : 'No bio available.');
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Header */}
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.push('/(client)')}>
           <Ionicons name="arrow-back" size={24} color={Colors.PRIMARY} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{clinic?.name || 'Clinic'}</Text>
       </View>
-
-      {/* Clinic Info */}
-      <View style={styles.clinicInfo}>
-        {currentImage ? (
-          <Animated.Image
-            source={{ uri: currentImage }}
-            style={[styles.clinicImage, { opacity: imageFadeAnim }]}
-          />
-        ) : (
-          <Image
-            source={{ uri: 'https://via.placeholder.com/80' }}
-            style={styles.clinicImage}
-          />
-        )}
-        <View style={styles.clinicDetails}>
-          <Text style={styles.clinicName}>{clinic?.name}</Text>
-          <Text style={styles.clinicAddress}>{clinic?.address}</Text>
-          <Text style={styles.clinicContact}>{clinic?.contactInfo}</Text>
-        </View>
-      </View>
-
-      <ActionButton location={clinic.address} contact={clinic.contactInfo} />
-
-      {selectedProfessional && selectedProfessional.user && (
-        <View style={styles.selectedProfessionalContainer}>
-          <Image 
-            source={{ uri: selectedProfessional.user.profileImage }} 
-            style={styles.selectedProfessionalImage} 
-          />
-          <View style={styles.selectedProfessionalInfo}>
-            <Text style={styles.selectedProfessionalName}>
-              {selectedProfessional.firstName} {selectedProfessional.lastName}
-            </Text>
-            <Text style={styles.selectedProfessionalTitle}>
-              {selectedProfessional.title}
-            </Text>
-            <Text style={styles.selectedProfessionalSpecialty}>
-              Specialty: {selectedProfessional.profession}
-            </Text>
-            <Text style={styles.selectedProfessionalFee}>
-              Consultation Fee: {selectedProfessional.consultationFee} KES
-            </Text>
+      <ScrollView>
+        {/* Clinic Info */}
+        <View style={styles.clinicInfo}>
+          {currentImage ? (
+            <Animated.Image
+              source={{ uri: currentImage }}
+              style={[styles.clinicImage, { opacity: imageFadeAnim }]}
+            />
+          ) : (
+            <Image
+              source={{ uri: 'https://via.placeholder.com/80' }}
+              style={styles.clinicImage}
+            />
+          )}
+          <View style={styles.clinicDetails}>
+            <Text style={styles.clinicName}>{clinic?.name}</Text>
+            <Text style={styles.clinicAddress}>{clinic?.address}</Text>
+            <Text style={styles.clinicContact}>{clinic?.contactInfo}</Text>
           </View>
         </View>
-      )}
 
-      {/* Description */}
-      <View style={styles.descriptionContainer}>
-        <Text style={styles.descriptionText}>{truncatedDesc}</Text>
-        <TouchableOpacity onPress={() => setShowFullDesc(!showFullDesc)}>
-          <Text style={styles.showMoreText}>{showFullDesc ? 'Show Less' : 'Show More'}</Text>
-        </TouchableOpacity>
-      </View>
+        <ActionButton location={clinic.address} contact={clinic.contactInfo} />
 
-      <ClinicSubHeading subHeadingTitle={'Specialties'} />
-      <View>
-        <FlatList
-          data={clinic.specialties.split(',')}
-          horizontal={true}
-          renderItem={({ item }) => (
-            <View style={styles.specialtyCard}>
-              <Text style={styles.specialty}>{item}</Text>
+        {selectedProfessional && selectedProfessional.user && (
+          <View style={styles.selectedProfessionalContainer}>
+            <Image 
+              source={{ uri: selectedProfessional.user.profileImage }} 
+              style={styles.selectedProfessionalImage} 
+            />
+            <View style={styles.selectedProfessionalInfo}>
+              <Text style={styles.selectedProfessionalName}>
+                {selectedProfessional.firstName} {selectedProfessional.lastName}
+              </Text>
+              <Text style={styles.selectedProfessionalTitle}>
+                {selectedProfessional.title}
+              </Text>
+              <Text style={styles.selectedProfessionalSpecialty}>
+                Specialty: {selectedProfessional.profession}
+              </Text>
+              <Text style={styles.selectedProfessionalFee}>
+                Consultation Fee: {selectedProfessional.consultationFee} KES
+              </Text>
             </View>
-          )}
-          keyExtractor={(item, index) => index.toString()}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.specialtyList}
-        />
-      </View>
+          </View>
+        )}
 
-      <ClinicSubHeading subHeadingTitle={'Insurance Companies'} />
-      <View>
-        <FlatList
-          data={clinic.insuranceCompanies}
-          horizontal={true}
-          renderItem={({ item }) => (
-            <TouchableOpacity style={styles.insuranceCard}>
-              <Text style={styles.insurance}>{item}</Text>
-            </TouchableOpacity>
-          )}
-          keyExtractor={(item, index) => index.toString()}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.insuranceList}
-        />
-      </View>
-
-      <ClinicSubHeading subHeadingTitle={'Doctors'} />
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.PRIMARY} />
+        {/* Description */}
+        <View style={styles.descriptionContainer}>
+          <Text style={styles.descriptionText}>{truncatedDesc}</Text>
+          <TouchableOpacity onPress={() => setShowFullDesc(!showFullDesc)}>
+            <Text style={styles.showMoreText}>{showFullDesc ? 'Show Less' : 'Show More'}</Text>
+          </TouchableOpacity>
         </View>
-      ) : (
+
+        <ClinicSubHeading subHeadingTitle={'Specialties'} />
         <View>
           <FlatList
-            data={doctorsData}
+            data={clinic.specialties.split(',')}
             horizontal={true}
             renderItem={({ item }) => (
-              <View style={styles.doctorItem}>
-                <Image 
-                  source={{ 
-                    uri: item.profileImage ? item.profileImage : 'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg' 
-                  }} 
-                  style={styles.doctorImage} 
-                />
-                <View style={styles.nameCategoryContainer}>
-                  <Text style={styles.doctorName}>{item.name}</Text> 
-                  <Text style={styles.doctorSpecialty}>{item.specialties.join(', ')}</Text> 
-                </View>
-                <Text style={styles.consultationFee}>Consultation Fee: {item.consultationFee} KES</Text>
-                <TouchableOpacity style={[styles.button, styles.consultButton]} onPress={() => handleConsult(item._id)}>
-                  <Text style={styles.buttonText}>View</Text>
-                </TouchableOpacity>
+              <View style={styles.specialtyCard}>
+                <Text style={styles.specialty}>{item}</Text>
               </View>
             )}
-            keyExtractor={(item) => item._id.toString()}
+            keyExtractor={(item, index) => index.toString()}
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.flatListContent}
+            contentContainerStyle={styles.specialtyList}
           />
         </View>
-      )}
-    </ScrollView>
+
+        <ClinicSubHeading subHeadingTitle={'Insurance Companies'} />
+        <View>
+          <FlatList
+            data={clinic.insuranceCompanies}
+            horizontal={true}
+            renderItem={({ item }) => (
+              <TouchableOpacity style={styles.insuranceCard}>
+                <Text style={styles.insurance}>{item}</Text>
+              </TouchableOpacity>
+            )}
+            keyExtractor={(item, index) => index.toString()}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.insuranceList}
+          />
+        </View>
+
+        <ClinicSubHeading subHeadingTitle={'Doctors'} />
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={Colors.PRIMARY} />
+          </View>
+        ) : (
+          <View>
+            <FlatList
+              data={doctorsData}
+              horizontal={true}
+              renderItem={({ item }) => (
+                <View style={styles.doctorItem}>
+                  <Image 
+                    source={{ 
+                      uri: item.profileImage ? item.profileImage : 'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg' 
+                    }} 
+                    style={styles.doctorImage} 
+                  />
+                  <View style={styles.nameCategoryContainer}>
+                    <Text style={styles.doctorName}>{item.name}</Text> 
+                    <Text style={styles.doctorSpecialty}>{item.specialties.join(', ')}</Text> 
+                  </View>
+                  <Text style={styles.consultationFee}>Consultation Fee: {item.consultationFee} KES</Text>
+                  <TouchableOpacity style={[styles.button, styles.consultButton]} onPress={() => handleConsult(item._id)}>
+                    <Text style={styles.buttonText}>View</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+              keyExtractor={(item) => item._id.toString()}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.flatListContent}
+            />
+          </View>
+        )}
+      </ScrollView>
+    </View>
   );
 }
 
@@ -264,6 +250,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'linear-gradient(to right, rgb(170, 255, 169) 11.2%, rgb(17, 255, 189) 91.1%);',
+    paddingTop: StatusBar.currentHeight,
     paddingHorizontal: 16,
   },
   loadingContainer: {

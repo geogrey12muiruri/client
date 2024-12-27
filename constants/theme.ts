@@ -4,5 +4,6 @@ export const theme = {
       backgroundHighlightColor: '#f7a641',
       textColor: '#1b1b1b',
       textHighlightColor: '#f0f0f0',
+      headerColor: '#a3de83',
     },
   };

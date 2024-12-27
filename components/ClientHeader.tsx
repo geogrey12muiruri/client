@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Colors from './Shared/Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { theme } from '@/constants/theme';
 
 const ClientHeader: React.FC<{ title: string }> = ({ title }) => {
   const dispatch = useDispatch();
@@ -52,15 +53,16 @@ const ClientHeader: React.FC<{ title: string }> = ({ title }) => {
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#a3de83',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    paddingTop: 30,
-    elevation: 4,
-    padding: 16, 
+    height: 150,
+    borderBottomLeftRadius: 50,
+    borderBottomRightRadius: 50,
+    backgroundColor: theme.colors.headerColor,
+    shadowColor: theme.colors.backgroundHighlightColor,
+    elevation: 25,
+    flexDirection: 'row', // Added to align items horizontally
+    justifyContent: 'space-between', // Added to space out items
+    alignItems: 'center', // Added to center items vertically
+    paddingHorizontal: 20, // Added padding for better spacing
   },
   leftSection: {
     flexDirection: 'row',
@@ -70,7 +72,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
-    flex: 1,
     textAlign: 'center',
   },
   profileImage: {
