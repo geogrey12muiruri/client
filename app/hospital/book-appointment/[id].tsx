@@ -24,6 +24,7 @@ import {
   selectClinicError,
 } from '../../(redux)/clinicSlice';
 import ClinicSubHeading from '../../../components/clinics/ClinicSubHeading';
+import { theme } from '@/constants/theme';
 
 const ClinicProfileScreen = () => {
   const { id } = useLocalSearchParams();
@@ -207,7 +208,7 @@ const ClinicProfileScreen = () => {
 export default ClinicProfileScreen;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9f9f9' },
+  container: { flex: 1, backgroundColor: theme.colors.backgroundColor },
   heroContainer: { position: 'relative', height: 250 },
   heroImage: { width: '100%', height: '100%' },
   backButton: {
@@ -217,6 +218,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     borderRadius: 20,
     padding: 10,
+    zIndex: 10,
   },
   heroOverlay: {
     position: 'absolute',

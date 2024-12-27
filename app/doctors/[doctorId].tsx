@@ -22,6 +22,7 @@ import BookingSection from '../../components/BookingSection';
 import HorizontalLine from '../../components/common/HorizontalLine';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ClinicSubHeading from '@/components/clinics/ClinicSubHeading';
+import { theme } from '@/constants/theme';
 
 const DoctorProfile: React.FC = () => {
   const router = useRouter();
@@ -169,7 +170,7 @@ const DoctorProfile: React.FC = () => {
 export default DoctorProfile;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9f9f9' },
+  container: { flex: 1, backgroundColor: theme.colors.backgroundColor },
   heroContainer: { position: 'relative', height: 250 },
   heroImage: { width: '100%', height: '100%' },
   backButton: {
@@ -179,6 +180,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     borderRadius: 20,
     padding: 10,
+    zIndex: 10,
   },
   heroOverlay: {
     position: 'absolute',
