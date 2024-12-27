@@ -15,7 +15,8 @@
     },
     "ios": {
       "supportsTablet": true,
-      "buildNumber": "medplus.company.app"
+      "buildNumber": "medplus.company.app",
+      "usesIcloudStorage": true
     },
     "android": {
       "adaptiveIcon": {
@@ -28,7 +29,13 @@
       "bundler": "metro"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-document-picker",
+        {
+          "iCloudContainerEnvironment": "Production"
+        }
+      ]
     ],
     "extra": {
       "eas": {
