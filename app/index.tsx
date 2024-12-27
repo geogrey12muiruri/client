@@ -19,7 +19,7 @@ export default function Index() {
   useEffect(() => {
     if (isOnboarded !== null) {
       if (isOnboarded) {
-        router.replace('/home');
+        router.replace('/auth/login');
       } else {
         router.replace('/onboarding');
       }

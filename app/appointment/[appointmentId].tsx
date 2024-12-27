@@ -42,7 +42,14 @@ const AppointmentDetails = () => {
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>Appointment Details</Text>
+      <View style={styles.header}>
+        <IconButton
+          icon={() => <MaterialIcons name="arrow-back" size={24} color="black" />}
+          size={30}
+          onPress={() => router.back()}
+        />
+        <Text style={styles.title}>Appointment Details</Text>
+      </View>
       <View style={styles.profileSection}>
         {appointment.doctorId?.profileImage && (
           <Image source={{ uri: appointment.doctorId.profileImage }} style={styles.profileImage} />
@@ -57,7 +64,6 @@ const AppointmentDetails = () => {
       </View>
 
       <Card style={styles.appointmentCard}>
-        <Card.Title title="Appointment Details" left={() => <MaterialIcons name="event" size={24} color="black" />} />
         <Card.Content>
           <View style={styles.detailRow}>
             <MaterialIcons name="date-range" size={20} color="grey" />
@@ -127,14 +133,21 @@ const AppointmentDetails = () => {
 
 const styles = StyleSheet.create({
   container: {
+    paddingTop: 20,
     flex: 1,
     padding: 16,
     backgroundColor: '#feffdf',
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 16,
+    textAlign: 'center',
+    flex: 1,
   },
   profileSection: {
     flexDirection: 'row',
@@ -156,6 +169,8 @@ const styles = StyleSheet.create({
   appointmentCard: {
     marginBottom: 20,
     backgroundColor: '#fffde7',
+    padding: 10,
+    borderRadius: 8,
   },
   detailRow: {
     flexDirection: 'row',
@@ -185,6 +200,8 @@ const styles = StyleSheet.create({
   },
   notesSection: {
     backgroundColor: '#e3f2fd',
+    padding: 10,
+    borderRadius: 8,
   },
   labSection: {
     backgroundColor: '#fce4ec',

@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
   },
   /** Section */
   section: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 10,
   },
   sectionTitle: {
     paddingVertical: 12,

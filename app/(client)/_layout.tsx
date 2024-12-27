@@ -1,10 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Tabs } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { View } from 'react-native';
 import ClientHeader from '../../components/ClientHeader';
+import * as NavigationBar from 'expo-navigation-bar';
 
 export default function RootLayout() {
+  useEffect(() => {
+    NavigationBar.setVisibilityAsync('hidden');
+  }, []);
+
   return (
     <>
       <ClientHeader title="MedPlus" />

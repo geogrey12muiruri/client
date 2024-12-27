@@ -7,6 +7,9 @@ import {
   TouchableOpacity,
   FlatList,
   ScrollView,
+  Animated,
+  Image,
+  StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
@@ -18,8 +21,7 @@ import Colors from '../../components/Shared/Colors';
 import BookingSection from '../../components/BookingSection';
 import HorizontalLine from '../../components/common/HorizontalLine';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Avatar } from 'react-native-elements';
-
+import ClinicSubHeading from '@/components/clinics/ClinicSubHeading';
 
 const DoctorProfile: React.FC = () => {
   const router = useRouter();
@@ -32,8 +34,9 @@ const DoctorProfile: React.FC = () => {
   const doctors = useSelector((state: RootState) => state.doctors.doctorList);
   const otherDoctors = doctors.filter((doc) => doc._id !== doctorId);
 
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
-    console.log('Doctor ID from params:', doctorId); // Debugging log
     if (doctorId) {
       dispatch(setSelectedDoctor(doctorId));
     }
@@ -43,13 +46,23 @@ const DoctorProfile: React.FC = () => {
   }, [dispatch, doctorId]);
 
   useEffect(() => {
-    console.log('Selected Doctor:', doctor); // Debugging log
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 800,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  useEffect(() => {
+    if (doctor) {
+      console.log('Doctor data:', doctor);
+    }
   }, [doctor]);
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size="large" color={Colors.primary} />
       </View>
     );
   }
@@ -74,193 +87,146 @@ const DoctorProfile: React.FC = () => {
     doctor.profileImage ||
     'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg';
 
-  const insuranceProviders = doctor.clinicId?.insuranceCompanies || [];
-  console.log(insuranceProviders);
+  const insuranceProviders = doctor.clinic?.insuranceCompanies || [];
+  const specialties = doctor.specialty || 'N/A';
+  const clinicName = doctor.clinic?.name || 'Unknown Clinic';
+  const title = doctor.title || 'N/A';
+  const profession = doctor.profession || 'N/A';
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-        <Ionicons name="arrow-back" size={24} color="black" />
-      </TouchableOpacity>
-      <ScrollView contentContainerStyle={styles.scrollViewContent}>
-        <View style={styles.profileContainer}>
-          <Avatar
-            source={{ uri: profileImageUri }}
-            containerStyle={styles.avatar}
-            imageProps={{ style: { borderRadius: 50 } }}
-          />
-          <View style={styles.profileInfo}>
-            <Text style={styles.doctorName}>{`${doctor.firstName} ${doctor.lastName}`}</Text>
-            <Text style={styles.categoryName}>{doctor.specialty || 'General'}</Text>
-            <Text style={styles.consultationFee}>{`Consultation Fee: ${doctor.consultationFee || 'N/A'}`}</Text>
-          </View>
+    <ScrollView style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+      {/* Hero Section */}
+      <View style={styles.heroContainer}>
+        <Image source={{ uri: profileImageUri }} style={styles.heroImage} />
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <View style={styles.heroOverlay}>
+          <Text style={styles.heroText}>{`${doctor.firstName} ${doctor.lastName}`}</Text>
         </View>
-        <View style={styles.infoContainer}>
-          <View style={styles.infoCard}>
-            <Ionicons name="person" size={20} color={Colors.primary} />
-            <Text style={styles.infoText}>{doctor.yearsOfExperience || 'N/A'} Years of Experience</Text>
-          </View>
-          <View style={styles.infoCard}>
-            <Ionicons name="people" size={20} color={Colors.primary} />
-            <Text style={styles.infoText}>{doctor.numberOfPatients || 'N/A'} Patients</Text>
-          </View>
+      </View>
+
+      {/* Description */}
+      <View style={styles.section}>
+        <ClinicSubHeading subHeadingTitle={`${doctor.firstName} ${doctor.lastName}`} />
+        <Text style={styles.descriptionText}>
+          {doctor.bio || 'No description available'}
+        </Text>
+      </View>
+
+      {/* Title, Profession, Specialty and Clinic */}
+      <View style={[styles.section, styles.horizontalSection]}>
+        <View style={styles.infoCard}>
+          <Ionicons name="ribbon" size={20} color={Colors.primary} />
+          <Text style={styles.infoText}>{title}</Text>
         </View>
-        <BookingSection
-          doctorId={doctor._id}
-          consultationFee={doctor.consultationFee || 'N/A'}
-          insurances={insuranceProviders}
+        <View style={styles.infoCard}>
+          <Ionicons name="briefcase" size={20} color={Colors.primary} />
+          <Text style={styles.infoText}>{profession}</Text>
+        </View>
+        <View style={styles.infoCard}>
+          <Ionicons name="medkit" size={20} color={Colors.primary} />
+          <Text style={styles.infoText}>{specialties}</Text>
+        </View>
+        <View style={styles.infoCard}>
+          <Ionicons name="business" size={20} color={Colors.primary} />
+          <Text style={styles.infoText}>{clinicName}</Text>
+        </View>
+      </View>
+
+      {/* Booking Section */}
+      <BookingSection
+        doctorId={doctor._id}
+        consultationFee={doctor.consultationFee || 'N/A'}
+        insurances={insuranceProviders}
+      />
+      <HorizontalLine />
+
+      {/* Other Doctors */}
+      <View style={styles.section}>
+        <ClinicSubHeading subHeadingTitle="Other Doctors" />
+        <FlatList
+          data={otherDoctors}
+          horizontal
+          renderItem={({ item }) => (
+            <View style={styles.doctorItem}>
+              <Image source={{ uri: item.profileImage || 'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg' }} style={styles.otherDoctorImage} />
+              <Text style={styles.otherDoctorName}>{`${item.firstName} ${item.lastName}`}</Text>
+              <TouchableOpacity style={styles.viewButton} onPress={() => router.push(`/doctors/${item._id}`)}>
+                <Text style={styles.viewButtonText}>View</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          keyExtractor={(item) => item._id}
+          showsHorizontalScrollIndicator={false}
         />
-        <HorizontalLine />
-        <View style={styles.otherDoctorsContainer}>
-          <Text style={styles.sectionTitle}>Other Doctors</Text>
-          <FlatList
-            data={otherDoctors}
-            horizontal={true}
-            renderItem={({ item }) => (
-              <View style={styles.doctorItem}>
-                <Avatar
-                  source={{ uri: item.profileImage || 'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg' }}
-                  containerStyle={styles.avatar}
-                  imageProps={{ style: { borderRadius: 50 } }}
-                />
-                <View style={styles.profileInfo}>
-                  <Text style={styles.doctorName}>{`${item.firstName} ${item.lastName}`}</Text>
-                  <Text style={styles.categoryName}>{item.specialty || 'General'}</Text>
-                </View>
-                <TouchableOpacity style={styles.viewButton} onPress={() => router.push(`/doctors/${item._id}`)}>
-                  <Text style={styles.viewButtonText}>View</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-            keyExtractor={(item) => item._id}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.flatListContent}
-          />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+      </View>
+    </ScrollView>
   );
 };
 
+export default DoctorProfile;
+
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: 'linear-gradient(to right, rgb(182, 244, 146), rgb(51, 139, 147))',
-  },
-  scrollViewContent: {
-    padding: 20,
-    paddingTop: 60,
-  },
+  container: { flex: 1, backgroundColor: '#f9f9f9' },
+  heroContainer: { position: 'relative', height: 250 },
+  heroImage: { width: '100%', height: '100%' },
   backButton: {
     position: 'absolute',
-    top: 20,
+    top: 40,
     left: 20,
-    zIndex: 2,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 20,
+    padding: 10,
   },
-  profileContainer: {
-    flexDirection: 'row',
+  heroOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
     alignItems: 'center',
-    padding: 15,
-    backgroundColor: 'linear-gradient(to right, rgb(170, 255, 169) 11.2%, rgb(17, 255, 189) 91.1%);',
-    borderRadius: 8,
-    marginBottom: 20,
-    borderBottomLeftRadius:20,
-    borderBottomRightRadius:20,
   },
-  avatar: {
-    width: 100,
-    height: 100,
-  },
-  profileInfo: {
-    flex: 1,
-    marginLeft: 15,
-  },
-  doctorName: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#333',
-  },
-  categoryName: {
-    fontSize: 16,
-    color: Colors.gray,
-    marginVertical: 4,
-  },
-  consultationFee: {
-    fontSize: 16,
-    color: Colors.gray,
-    marginVertical: 4,
-  },
-  infoContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginVertical: 10,
-    paddingHorizontal: 10,
-  },
+  heroText: { fontSize: 24, color: '#fff', fontWeight: 'bold' },
+  section: { marginVertical: 15, paddingHorizontal: 15 },
+  horizontalSection: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  descriptionText: { fontSize: 16, color: '#333' },
   infoCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.white,
-    padding: 10,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 2,
-    marginHorizontal: 5,
+    marginBottom: 10,
+    width: '45%',
   },
-  infoText: {
-    fontSize: 16,
-    color: '#333',
-    marginLeft: 5,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorText: {
-    color: 'red',
-    fontSize: 18,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginVertical: 10,
-    marginLeft: 15,
-  },
+  infoText: { marginLeft: 8, fontSize: 14, color: Colors.text },
   doctorItem: {
-    marginRight: 10,
-    borderWidth: 1,
-    borderColor: Colors.light_gray,
-    borderRadius: 10,
-    padding: 10,
-    width: 200,
+    alignItems: 'center',
+    marginRight: 20,
   },
-  flatListContent: {
-    paddingVertical: 10,
+  otherDoctorImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginBottom: 10,
   },
-  otherDoctorsContainer: {
-    marginTop: 20,
+  otherDoctorName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: Colors.text,
+    textAlign: 'center',
   },
   viewButton: {
-    backgroundColor: Colors.LIGHT_GRAY,
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    borderRadius: 20,
     marginTop: 10,
-    alignSelf: 'center',
+    backgroundColor: Colors.primary,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
   },
   viewButtonText: {
-    color: Colors.PRIMARY,
+    color: '#fff',
     fontSize: 14,
     fontWeight: 'bold',
   },
 });
-
-export default DoctorProfile;
