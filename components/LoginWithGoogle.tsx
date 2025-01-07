@@ -32,7 +32,7 @@ const LoginWithGoogle: React.FC<LoginWithGoogleProps> = ({ onLoginSuccess }) => 
 
     const sendGoogleUserDataToBackend = async (userData: any) => {
         try {
-            const response = await axios.post('https://project03-rj91.onrender.com/api/users/google-login', {
+            const response = await axios.post('https://medplus-health.onrender.com/api/users/google-login', {
                 email: userData.email,
                 firstname: userData.given_name,
                 lastname: userData.family_name,
@@ -64,7 +64,7 @@ const LoginWithGoogle: React.FC<LoginWithGoogleProps> = ({ onLoginSuccess }) => 
             });
             const data = await response.json();
             console.log('user profile', data);
-            sendGoogleUserDataToBackend(data); 
+            sendGoogleUserDataToBackend(data); // Send user data to backend
         } catch (error) {
             console.log('error', error);
         }
@@ -115,6 +115,6 @@ const styles = StyleSheet.create({
     },
     googleImage: {
         height: 35,
-        width: 35,
+        width: 35, // Adjusted width to match height
     },
 });

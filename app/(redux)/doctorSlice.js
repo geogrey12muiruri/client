@@ -6,11 +6,24 @@ export const fetchDoctors = createAsyncThunk(
   'doctors/fetchDoctors',
   async () => {
     const response = await axios.get('https://medplus-health.onrender.com/api/professionals');
-    const doctorsWithInsurance = response.data.map((doctor) => ({
-      ...doctor,
-      clinic: doctor.clinicId,
-    }));
-    return doctorsWithInsurance;
+    console.log('Fetched doctors data:', response.data); // Log the fetched data
+    const transformedData = response.data.map((doctor) => {
+      return {
+        id: doctor._id,
+        firstName: doctor.firstName,
+        lastName: doctor.lastName,
+        specialty: doctor.professionalDetails.specialization,
+        profileImage: doctor.user.profileImage,
+        clinicAddress: doctor.practiceLocation,
+        bio: doctor.bio,
+        title: doctor.title,
+        profession: doctor.profession,
+        consultationFee: doctor.consultationFee,
+        clinic: doctor.clinic,
+        // Add any other fields you need
+      };
+    });
+    return transformedData;
   }
 );
 
@@ -28,7 +41,7 @@ const doctorsSlice = createSlice({
   initialState,
   reducers: {
     setSelectedDoctor(state, action) {
-      state.selectedDoctor = state.doctorList.find((doctor) => doctor._id === action.payload) || null;
+      state.selectedDoctor = state.doctorList.find((doctor) => doctor.id === action.payload) || null;
     },
     clearSelectedDoctor(state) {
       state.selectedDoctor = null;

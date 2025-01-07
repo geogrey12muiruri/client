@@ -9,13 +9,7 @@ import {
   Animated,
   Image,
 } from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
-import {
-  fetchClinics,
-  filterClinics,
-  selectClinics,
-  setSelectedClinic,
-} from '../../app/(redux)/clinicSlice';
+import axios from 'axios';
 import SubHeading from '../../components/client/SubHeading';
 import Colors from '../Shared/Colors';
 import * as SplashScreen from 'expo-splash-screen';
@@ -28,6 +22,7 @@ import {
   Poppins_500Medium,
   useFonts,
 } from "@expo-google-fonts/poppins";
+import useInsurance from '../../hooks/useInsurance'; // Import the insurance hook
 
 SplashScreen.preventAutoHideAsync();
 
@@ -46,8 +41,11 @@ interface ClinicsProps {
 
 const Clinics: React.FC<ClinicsProps> = ({ searchQuery, onViewAll }) => {
   const router = useRouter();
-  const dispatch = useDispatch();
-  const clinics = useSelector(selectClinics);
+  const [clinics, setClinics] = useState<Clinic[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const { insuranceProviders } = useInsurance(); // Use the insurance hook
 
   const [fontsLoaded] = useFonts({
     Poppins_600SemiBold,
@@ -57,10 +55,6 @@ const Clinics: React.FC<ClinicsProps> = ({ searchQuery, onViewAll }) => {
     Poppins_500Medium,
   });
 
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const loading = useSelector((state: any) => state.clinics.loading);
-  const error = useSelector((state: any) => state.clinics.error);
-
   useEffect(() => {
     if (fontsLoaded) {
       SplashScreen.hideAsync();
@@ -68,23 +62,62 @@ const Clinics: React.FC<ClinicsProps> = ({ searchQuery, onViewAll }) => {
   }, [fontsLoaded]);
 
   useEffect(() => {
-    console.log("Initial Fetch of Clinics");
-    if (clinics.length === 0) {
-      dispatch(fetchClinics());
-    }
-  }, [dispatch, clinics.length]);
+    const fetchClinics = async () => {
+      try {
+        const response = await axios.get('https://medplus-health.onrender.com/api/professionals');
+        console.log('Fetched clinics raw data:', response.data); // Log the raw fetched data
+        const transformedData = response.data.map((clinic) => {
+          const insuranceNames = clinic.insuranceProviders.map(id => {
+            const provider = insuranceProviders.find(provider => provider._id === id);
+            return provider ? provider.name : 'Unknown';
+          });
+          const doctorData = {
+            id: clinic._id, // Unique identifier for the doctor
+            firstName: clinic.firstName, // Doctor's first name
+            lastName: clinic.lastName, // Doctor's last name
+            specialty: clinic.professionalDetails?.specialization || 'N/A', // Doctor's specialty
+            profileImage: clinic.profileImage, // URL to the doctor's profile image
+            clinicAddress: clinic.practiceLocation, // Address of the clinic where the doctor practices
+            clinicName: clinic.practiceName || 'Unknown Clinic', // Name of the clinic, with a default value if not provided
+            bio: clinic.bio || 'No bio available', // Doctor's biography, with a default value if not provided
+            title: clinic.title || 'N/A', // Doctor's title, with a default value if not provided
+            profession: clinic.profession || 'N/A', // Doctor's profession, with a default value if not provided
+            consultationFee: clinic.consultationFee || 'N/A', // Consultation fee, with a default value if not provided
+            clinic: clinic.clinic || { insuranceCompanies: [] }, // Clinic information, with a default value if not provided
+            insuranceProviders: insuranceNames, // List of insurance providers the doctor accepts, mapped from IDs to names
+            yearsOfExperience: clinic.professionalDetails?.yearsOfExperience || 'N/A', // Years of experience
+            specializedTreatment: clinic.professionalDetails?.specializedTreatment || 'N/A', // Specialized treatment
+            certifications: clinic.professionalDetails?.certifications || [], // Certifications
+          };
+          console.log('Transformed doctor data:', doctorData); // Log the transformed doctor data
+          return {
+            _id: clinic._id,
+            name: `${clinic.firstName} ${clinic.lastName}`,
+            category: clinic.professionalDetails?.specialization || 'N/A',
+            address: clinic.practiceLocation,
+            clinicImages: clinic.clinic_images,
+            profileImage: clinic.profileImage,
+            insuranceProviders: clinic.insuranceProviders,
+            practiceLocation: clinic.practiceLocation,
+            practiceName: clinic.practiceName,
+            workingHours: clinic.workingHours,
+            workingDays: clinic.workingDays,
+            doctors: [doctorData], // Add the transformed doctors data
+          };
+        });
+        console.log('Transformed clinic data:', transformedData); // Log the transformed data
+        setClinics(transformedData); // Set the transformed data to the state
+        setLoading(false); // Set loading to false after data is fetched and transformed
+      } catch (error) {
+        setError(error.message || 'Failed to load clinics'); // Set error message if the fetch fails
+        setLoading(false); // Set loading to false if there is an error
+      }
+    };
+
+    fetchClinics();
+  }, [insuranceProviders]);
 
   useEffect(() => {
-    console.log("Search Query Updated:", searchQuery);
-    if (searchQuery) {
-      dispatch(filterClinics(searchQuery));
-    } else {
-      dispatch(fetchClinics());
-    }
-  }, [searchQuery, dispatch]);
-
-  useEffect(() => {
-    console.log("Filtered Clinic List:", clinics);
     if (!loading && clinics.length > 0) {
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -95,11 +128,29 @@ const Clinics: React.FC<ClinicsProps> = ({ searchQuery, onViewAll }) => {
   }, [loading, clinics]);
 
   const handlePress = (item: Clinic) => {
-    console.log("Navigating to clinic with ID:", item._id);
-    dispatch(setSelectedClinic(item));
+    const doctorData = item.doctors.map((doctor) => ({
+      id: doctor.id,
+      firstName: doctor.firstName,
+      lastName: doctor.lastName,
+      specialty: doctor.specialty,
+      profileImage: doctor.profileImage,
+      clinicAddress: doctor.clinicAddress,
+      clinicName: doctor.clinicName || 'Unknown Clinic',
+      bio: doctor.bio || 'No bio available',
+      title: doctor.title || 'N/A',
+      profession: doctor.profession || 'N/A',
+      consultationFee: doctor.consultationFee || 'N/A',
+      clinic: doctor.clinic || { insuranceCompanies: [] },
+      insuranceProviders: doctor.insuranceProviders,
+      yearsOfExperience: doctor.yearsOfExperience || 'N/A',
+      specializedTreatment: doctor.specializedTreatment || 'N/A',
+      certifications: doctor.certifications || [],
+    }));
 
+    console.log("Navigating to clinic with ID:", item._id);
     router.push({
       pathname: `/hospital/book-appointment/${item._id}`,
+      params: { clinic: JSON.stringify(item), doctors: JSON.stringify(doctorData) },
     });
   };
 
@@ -145,19 +196,13 @@ const Clinics: React.FC<ClinicsProps> = ({ searchQuery, onViewAll }) => {
           />
         ) : (
           <Image
-            source={{ uri: 'https://via.placeholder.com/200x100?text=No+Image' }}
+            source={item.profileImage ? { uri: item.profileImage } : 'https://res.cloudinary.com/dws2bgxg4/image/upload/v1734385887/loginp_ovgecg.png'}
             style={styles.clinicImage}
           />
         )}
         <View style={styles.textContainer}>
           <Text style={styles.clinicName} numberOfLines={1}>
-            {item.name}
-          </Text>
-          <Text style={styles.clinicCategory} numberOfLines={1}>
-            {item.category}
-          </Text>
-          <Text style={styles.clinicAddress} numberOfLines={1}>
-            {item.address}
+            {item.practiceName}
           </Text>
         </View>
       </TouchableOpacity>
@@ -198,7 +243,6 @@ const Clinics: React.FC<ClinicsProps> = ({ searchQuery, onViewAll }) => {
 const styles = StyleSheet.create({
   clinicItem: {
     marginRight: 10,
-   
     borderRadius: 10,
     padding: 10,
     width: 200,

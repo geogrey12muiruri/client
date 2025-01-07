@@ -10,6 +10,7 @@ interface LoginData {
 interface RegisterData extends LoginData {
   firstName: string;
   lastName: string;
+  userType: string; // Add userType to RegisterData interface
 }
 
 interface UserData {
@@ -27,13 +28,9 @@ const loginUser = async ({ email, password }: LoginData): Promise<any> => {
 };
 
 // register
-const registerUser = async ({ email, password, firstName, lastName }: RegisterData): Promise<any> => {
-  const response = await axios.post(`${API_URL}/api/users/register`, {
-    email,
-    password,
-    firstName,
-    lastName,
-  });
+const registerUser = async (data: RegisterData): Promise<any> => {
+  console.log("Data being sent to API:", data); // Add this line to log the data being sent to the API
+  const response = await axios.post(`${API_URL}/api/users/register`, data);
   return response.data;
 };
 
@@ -56,12 +53,37 @@ const setPassword = async (token: string, password: string): Promise<any> => {
   return response.data;
 };
 
+// reset password
+const resetPassword = async (email: string, verificationCode: string, newPassword: string): Promise<any> => {
+  const response = await axios.post(`${API_URL}/api/users/reset-password`, { email, verificationCode, newPassword });
+  return response.data;
+};
+
+// request password reset
+const requestPasswordReset = async (email: string): Promise<any> => {
+  const response = await fetch(`${API_URL}/api/users/request-password-reset`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to request password reset");
+  }
+
+  return response.json();
+};
+
 // export the functions
-export { loginUser, registerUser, googleLoginUser, setPassword };
+export { loginUser, registerUser, googleLoginUser, setPassword, resetPassword, requestPasswordReset };
 
 export default {
   loginUser,
   registerUser,
   googleLoginUser,
   setPassword,
+  resetPassword,
+  requestPasswordReset,
 };

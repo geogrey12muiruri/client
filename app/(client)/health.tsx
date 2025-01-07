@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import * as DocumentPicker from 'expo-document-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import { theme } from '@/constants/theme';
 
 const Health = () => {
   const [medication, setMedication] = useState('');
@@ -42,15 +43,15 @@ const Health = () => {
         <Text style={styles.content}>BMI: 22.5 | Weight: 70kg | Height: 170cm</Text>
       </View>
 
-      {/* Upcoming Appointments */}
+     
       <View style={styles.section}>
-        <Text style={styles.title}><Ionicons name="calendar" size={24} color="blue" /> Upcoming Appointments</Text>
+        <Text style={styles.title}><Ionicons name="calendar" size={24} color="blue" />Consultations</Text>
         <Text style={styles.content}>Dr. Smith - Cardiologist - Dec 28, 10:00 AM</Text>
       </View>
 
       {/* Personalized Health Goals */}
       <View style={styles.section}>
-        <Text style={styles.title}><Ionicons name="walk" size={24} color="green" /> Health Goals</Text>
+        <Text style={styles.title}><Ionicons name="walk" size={24} color="green" /> insights</Text>
         <Text style={styles.content}>Steps Today: 7,000 / 10,000</Text>
       </View>
 
@@ -131,7 +132,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: theme.colors.backgroundColor,
   },
   section: {
     marginBottom: 16,

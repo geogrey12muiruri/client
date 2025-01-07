@@ -21,7 +21,7 @@ export default function Index() {
       if (isOnboarded) {
         router.replace('/auth/login');
       } else {
-        router.replace('/onboarding');
+        router.replace('/(routes)/onboarding');
       }
     }
   }, [isOnboarded, router]);

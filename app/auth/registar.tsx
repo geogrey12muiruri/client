@@ -19,7 +19,6 @@ import { registerUser } from "../(services)/api/api";
 import axios from "axios";
 import Loader from "../../components/Loader";
 import LoginWithGoogle from '../../components/LoginWithGoogle';
-import { theme } from "@/constants/theme";
 
 interface RegisterValues {
   email: string;
@@ -27,6 +26,7 @@ interface RegisterValues {
   confirmPassword: string;
   firstName: string;
   lastName: string;
+  userType: string;
 }
 
 const RegisterSchema = Yup.object().shape({
@@ -37,6 +37,7 @@ const RegisterSchema = Yup.object().shape({
     .required("Required"),
   firstName: Yup.string().required("Required"),
   lastName: Yup.string().required("Required"),
+  userType: Yup.string().required("Required"), // Add userType validation
 });
 
 export default function Register() {
@@ -80,7 +81,7 @@ export default function Register() {
   const imageUrl = "https://res.cloudinary.com/dws2bgxg4/image/upload/v1734385887/loginp_ovgecg.png"; // Replace with your Cloudinary URL
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.backgroundColor }}>
+    <View style={{ flex: 1, backgroundColor: '#fff' }}>
       <Loader loading={loading} />
       <ScrollView
         keyboardShouldPersistTaps="handled"
@@ -107,6 +108,7 @@ export default function Register() {
               confirmPassword: "",
               firstName: "",
               lastName: "",
+              userType: "professional", // Default userType
             }}
             validationSchema={RegisterSchema}
             onSubmit={(values: RegisterValues) => {
@@ -115,6 +117,7 @@ export default function Register() {
                 password: values.password,
                 firstName: values.firstName,
                 lastName: values.lastName,
+                userType: values.userType, // Include userType in payload
               };
               setLoading(true);
               mutation
@@ -144,7 +147,7 @@ export default function Register() {
             }) => {
               const handleVerificationPress = async () => {
                 try {
-                  const response = await axios.post('https://project03-rj91.onrender.com/api/users/verify-email', {
+                  const response = await axios.post('https://medplus-health.onrender.com/api/users/verify-email', {
                     email: values.email,
                     verificationCode,
                   });

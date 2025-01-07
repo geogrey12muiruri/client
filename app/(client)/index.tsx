@@ -23,7 +23,7 @@ const Index: React.FC = () => {
             onSubmit={handleSearchSubmit}
           />
           <Category searchQuery={searchQuery} />
-          <Clinics searchQuery={searchQuery} />
+          <Clinics searchQuery={searchQuery} onViewAll={() => { /* handle view all */ }} />
           <Doctors searchQuery={searchQuery} />
         </View>
       </ScrollView>

@@ -1,21 +1,17 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   StyleSheet,
   Text,
   View,
   ActivityIndicator,
   TouchableOpacity,
-  FlatList,
   ScrollView,
   Animated,
   Image,
   StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchDoctors, setSelectedDoctor, clearSelectedDoctor, selectSelectedDoctor } from '../(redux)/doctorSlice';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import type { RootState } from '../../app/(redux)/store';
 import Colors from '../../components/Shared/Colors';
 
 import BookingSection from '../../components/BookingSection';
@@ -23,28 +19,29 @@ import HorizontalLine from '../../components/common/HorizontalLine';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ClinicSubHeading from '@/components/clinics/ClinicSubHeading';
 import { theme } from '@/constants/theme';
+import useInsurance from '../../hooks/useInsurance';
+import Doctors from '../../components/client/Doctors'; // Ensure this import is correct
 
 const DoctorProfile: React.FC = () => {
   const router = useRouter();
-  const { doctorId } = useLocalSearchParams();
+  const { doctorId, doctor: doctorParam } = useLocalSearchParams();
+  const doctor = doctorParam ? JSON.parse(decodeURIComponent(doctorParam as string)) : null;
+  const { insuranceProviders } = useInsurance(); // Use the insurance hook
 
-  const dispatch = useDispatch();
-  const doctor = useSelector(selectSelectedDoctor);
-  const loading = useSelector((state: RootState) => state.doctors.loading);
-  const error = useSelector((state: RootState) => state.doctors.error);
-  const doctors = useSelector((state: RootState) => state.doctors.doctorList);
-  const otherDoctors = doctors.filter((doc) => doc._id !== doctorId);
+  console.log('Doctor data:', doctor); // Log the doctor data
 
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (doctorId) {
-      dispatch(setSelectedDoctor(doctorId));
+    if (doctor) {
+      setLoading(false);
+    } else {
+      setError('Doctor information not found.');
+      setLoading(false);
     }
-    return () => {
-      dispatch(clearSelectedDoctor());
-    };
-  }, [dispatch, doctorId]);
+  }, [doctor]);
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -54,16 +51,10 @@ const DoctorProfile: React.FC = () => {
     }).start();
   }, []);
 
-  useEffect(() => {
-    if (doctor) {
-      console.log('Doctor data:', doctor);
-    }
-  }, [doctor]);
-
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color={Colors.PRIMARY} />
       </View>
     );
   }
@@ -76,23 +67,19 @@ const DoctorProfile: React.FC = () => {
     );
   }
 
-  if (!doctor) {
-    return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Error: Doctor information not found.</Text>
-      </View>
-    );
-  }
+  console.log('Doctor clinicName:', doctor.clinicName); // Log clinicName
 
   const profileImageUri =
     doctor.profileImage ||
     'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg';
 
-  const insuranceProviders = doctor.clinic?.insuranceCompanies || [];
   const specialties = doctor.specialty || 'N/A';
-  const clinicName = doctor.clinic?.name || 'Unknown Clinic';
+  const clinicName = doctor.clinicName || 'Unknown Clinic';
   const title = doctor.title || 'N/A';
   const profession = doctor.profession || 'N/A';
+  const yearsOfExperience = doctor.yearsOfExperience || 'N/A';
+  const specializedTreatment = doctor.specializedTreatment || 'N/A';
+  const certifications = doctor.certifications.join(', ') || 'N/A';
 
   return (
     <ScrollView style={styles.container}>
@@ -116,16 +103,8 @@ const DoctorProfile: React.FC = () => {
         </Text>
       </View>
 
-      {/* Title, Profession, Specialty and Clinic */}
+      {/* Title, Profession, Specialty, Clinic, Experience, Treatment, and Certifications */}
       <View style={[styles.section, styles.horizontalSection]}>
-        <View style={styles.infoCard}>
-          <Ionicons name="ribbon" size={20} color={Colors.primary} />
-          <Text style={styles.infoText}>{title}</Text>
-        </View>
-        <View style={styles.infoCard}>
-          <Ionicons name="briefcase" size={20} color={Colors.primary} />
-          <Text style={styles.infoText}>{profession}</Text>
-        </View>
         <View style={styles.infoCard}>
           <Ionicons name="medkit" size={20} color={Colors.primary} />
           <Text style={styles.infoText}>{specialties}</Text>
@@ -134,34 +113,28 @@ const DoctorProfile: React.FC = () => {
           <Ionicons name="business" size={20} color={Colors.primary} />
           <Text style={styles.infoText}>{clinicName}</Text>
         </View>
+        <View style={styles.infoCard}>
+          <Ionicons name="calendar" size={20} color={Colors.primary} />
+          <Text style={styles.infoText}>{yearsOfExperience} years of experience</Text>
+        </View>
+        <View style={styles.infoCard}>
+          <Ionicons name="medkit" size={20} color={Colors.primary} />
+          <Text style={styles.infoText}>{specializedTreatment}</Text>
+        </View>
       </View>
 
       {/* Booking Section */}
       <BookingSection
-        doctorId={doctor._id}
+        doctorId={doctor.userId} // Pass userId instead of doctorId
         consultationFee={doctor.consultationFee || 'N/A'}
-        insurances={insuranceProviders}
+        insurances={doctor.insuranceProviders}
       />
       <HorizontalLine />
 
-      {/* Other Doctors */}
+      {/* Doctors List Section */}
       <View style={styles.section}>
-        <ClinicSubHeading subHeadingTitle="Other Doctors" />
-        <FlatList
-          data={otherDoctors}
-          horizontal
-          renderItem={({ item }) => (
-            <View style={styles.doctorItem}>
-              <Image source={{ uri: item.profileImage || 'https://res.cloudinary.com/dws2bgxg4/image/upload/v1726073012/nurse_portrait_hospital_2d1bc0a5fc.jpg' }} style={styles.otherDoctorImage} />
-              <Text style={styles.otherDoctorName}>{`${item.firstName} ${item.lastName}`}</Text>
-              <TouchableOpacity style={styles.viewButton} onPress={() => router.push(`/doctors/${item._id}`)}>
-                <Text style={styles.viewButtonText}>View</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-          keyExtractor={(item) => item._id}
-          showsHorizontalScrollIndicator={false}
-        />
+        
+        <Doctors searchQuery="" excludeDoctorId={doctor.id} />
       </View>
     </ScrollView>
   );
@@ -203,32 +176,18 @@ const styles = StyleSheet.create({
     width: '45%',
   },
   infoText: { marginLeft: 8, fontSize: 14, color: Colors.text },
-  doctorItem: {
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 20,
   },
-  otherDoctorImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 10,
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  otherDoctorName: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: Colors.text,
-    textAlign: 'center',
-  },
-  viewButton: {
-    marginTop: 10,
-    backgroundColor: Colors.primary,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-  },
-  viewButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
+  errorText: {
+    color: 'red',
+    fontSize: 16,
   },
 });

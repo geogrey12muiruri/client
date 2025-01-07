@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-import { View, Text, TouchableOpacity, FlatList, Alert, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, Alert, StyleSheet, ActivityIndicator } from 'react-native';
 import moment from 'moment';
 import AwesomeAlert from 'react-native-awesome-alerts';
 import { Paystack, paystackProps } from 'react-native-paystack-webview';
@@ -35,7 +35,7 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
   const userEmail = email;
   const patientName = name;
   const dispatch = useDispatch();
-  const { schedule, fetchSchedule,  updateSlot } = useSchedule();
+  const { schedule, fetchSchedule,  updateSlot, loading, error } = useSchedule(doctorId);
  
   const socket = useRef(io('https://medplus-health.onrender.com')).current;
 
@@ -248,10 +248,34 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
     setSelectedTimeSlot(null);
   };
 
+  const generateSlots = (startTime: string, endTime: string) => {
+    const slots = [];
+    const consultationDuration = 60; // 60 minutes
+    const waitingTime = 10; // 10 minutes
+
+    let start = moment(startTime, 'h:mm A');
+    const end = moment(endTime, 'h:mm A');
+
+    while (start.add(consultationDuration + waitingTime, 'minutes').isBefore(end) || start.isSame(end)) {
+      const slotStart = start.clone().subtract(consultationDuration + waitingTime, 'minutes');
+      const slotEnd = slotStart.clone().add(consultationDuration, 'minutes');
+      slots.push({
+        startTime: slotStart.format('h:mm A'),
+        endTime: slotEnd.format('h:mm A'),
+        isBooked: false,
+        _id: `${slotStart.format('HHmm')}-${slotEnd.format('HHmm')}`,
+      });
+    }
+
+    console.log('Generated slots:', slots); // Log the generated slots
+    return slots;
+  };
+
   const groupedSlots = schedule.reduce((acc: Record<string, { date: string; startTime: string; endTime: string; isBooked: boolean; _id: string }[]>, slot) => {
     const date = moment(slot.date).format('YYYY-MM-DD');
     if (!acc[date]) acc[date] = [];
-    acc[date].push(slot);
+    const generatedSlots = generateSlots(slot.startTime, slot.endTime);
+    acc[date] = acc[date].concat(generatedSlots);
     return acc;
   }, {});
 
@@ -263,121 +287,133 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
     return acc;
   }, {});
 
+  console.log('Doctor ID:', doctorId);
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Book an Appointment</Text>
-      <FlatList
-        horizontal
-        data={dateOptions}
-        keyExtractor={(item) => item.toISOString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            onPress={() => setSelectedDate(item)}
-            style={[
-              styles.dateButton,
-              selectedDate.toDateString() === item.toDateString() ? { backgroundColor: Colors.goofy } : null,
-            ]}
-          >
-            <Text style={styles.dateText}>{moment(item).format('ddd, DD')}</Text>
-          </TouchableOpacity>
-        )}
-        showsHorizontalScrollIndicator={false}
-      />
-      <Text style={styles.dateTitle}>{moment(selectedDate).format('dddd, MMMM Do YYYY')}</Text>
-      <FlatList
-        horizontal
-        data={groupedSlots[moment(selectedDate).format('YYYY-MM-DD')] || []}
-        keyExtractor={(item) => item._id}
-        renderItem={({ item }) => {
-          const slotTime = moment(`${moment(selectedDate).format('YYYY-MM-DD')} ${item.startTime}`, 'YYYY-MM-DD HH:mm');
-          const isPast = slotTime.isBefore(moment());
-        
-          return (
-            <TouchableOpacity
-              onPress={() => {
-                if (item.isBooked || isPast) {
-                  Alert.alert(item.isBooked ? 'Slot already booked' : 'Invalid slot', item.isBooked ? 'Please choose another time slot.' : 'Cannot select a past time slot.');
-                } else {
-                  setSelectedTimeSlot({ id: item._id, time: `${item.startTime} - ${item.endTime}` });
-                }
-              }}
-              style={[
-                styles.slotButton,
-                item.isBooked || isPast ? { backgroundColor: Colors.SECONDARY } : { backgroundColor: Colors.goofy },
-                selectedTimeSlot && selectedTimeSlot.id === item._id
-                  ? { borderColor: Colors.SECONDARY, borderWidth: 2, backgroundColor: Colors.selectedBackground }
-                  : {},
-              ]}
-              disabled={item.isBooked || isPast}
-            >
-              <Text
+      {loading ? (
+        <ActivityIndicator size="large" color={Colors.PRIMARY} />
+      ) : error ? (
+        <Text>Error loading schedule: {error}</Text>
+      ) : (
+        <>
+          <Text style={styles.title}>Book an Appointment</Text>
+          <FlatList
+            horizontal
+            data={dateOptions}
+            keyExtractor={(item) => item.toISOString()}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                onPress={() => setSelectedDate(item)}
                 style={[
-                  styles.slotText,
-                  selectedTimeSlot && selectedTimeSlot.id === item._id
-                    ? { color: Colors.selectedText }
-                    : {},
+                  styles.dateButton,
+                  selectedDate.toDateString() === item.toDateString() ? { backgroundColor: Colors.goofy } : null,
                 ]}
               >
-                {`${item.startTime} - ${item.endTime}`}
-              </Text>
-            </TouchableOpacity>
-          );
-        }}
-      />
-      <Text style={styles.insuranceTitle}>Accepted Insurances</Text>
-      {insurances.length > 0 ? (
-        <FlatList
-          horizontal
-          data={insurances}
-          keyExtractor={(item, index) => index.toString()}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              onPress={() => setSelectedInsurance(item)}
-              style={[
-                styles.insuranceCard,
-                item === selectedInsurance ? styles.selectedInsuranceCard : null
-              ]}
-            >
-              <Text style={[
-                styles.insuranceText,
-                item === selectedInsurance ? styles.selectedInsuranceText : null
-              ]}>{item}</Text>
-            </TouchableOpacity>
+                <Text style={styles.dateText}>{moment(item).format('ddd, DD')}</Text>
+              </TouchableOpacity>
+            )}
+            showsHorizontalScrollIndicator={false}
+          />
+          <Text style={styles.dateTitle}>{moment(selectedDate).format('dddd, MMMM Do YYYY')}</Text>
+          <FlatList
+            horizontal
+            data={groupedSlots[moment(selectedDate).format('YYYY-MM-DD')] || []}
+            keyExtractor={(item) => item._id}
+            renderItem={({ item }) => {
+              const slotTime = moment(`${moment(selectedDate).format('YYYY-MM-DD')} ${item.startTime}`, 'YYYY-MM-DD HH:mm');
+              const isPast = slotTime.isBefore(moment());
+            
+              console.log('Rendering slot:', item); // Log each slot being rendered
+
+              return (
+                <TouchableOpacity
+                  onPress={() => {
+                    if (item.isBooked || isPast) {
+                      Alert.alert(item.isBooked ? 'Slot already booked' : 'Invalid slot', item.isBooked ? 'Please choose another time slot.' : 'Cannot select a past time slot.');
+                    } else {
+                      setSelectedTimeSlot({ id: item._id, time: `${item.startTime} - ${item.endTime}` });
+                    }
+                  }}
+                  style={[
+                    styles.slotButton,
+                    item.isBooked || isPast ? { backgroundColor: Colors.SECONDARY } : { backgroundColor: Colors.goofy },
+                    selectedTimeSlot && selectedTimeSlot.id === item._id
+                      ? { borderColor: Colors.SECONDARY, borderWidth: 2, backgroundColor: Colors.selectedBackground }
+                      : {},
+                  ]}
+                  disabled={item.isBooked || isPast}
+                >
+                  <Text
+                    style={[
+                      styles.slotText,
+                      selectedTimeSlot && selectedTimeSlot.id === item._id
+                        ? { color: Colors.selectedText }
+                        : {},
+                    ]}
+                  >
+                    {`${item.startTime} - ${item.endTime}`}
+                  </Text>
+                </TouchableOpacity>
+              );
+            }}
+          />
+          <Text style={styles.insuranceTitle}>Accepted Insurances</Text>
+          {insurances.length > 0 ? (
+            <FlatList
+              horizontal
+              data={insurances}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  onPress={() => setSelectedInsurance(item)}
+                  style={[
+                    styles.insuranceCard,
+                    item === selectedInsurance ? styles.selectedInsuranceCard : null
+                  ]}
+                >
+                  <Text style={[
+                    styles.insuranceText,
+                    item === selectedInsurance ? styles.selectedInsuranceText : null
+                  ]}>{item}</Text>
+                </TouchableOpacity>
+              )}
+              showsHorizontalScrollIndicator={false}
+            />
+          ) : (
+            <Text style={styles.noInsuranceText}>No insurances available</Text>
           )}
-          showsHorizontalScrollIndicator={false}
-        />
-      ) : (
-        <Text style={styles.noInsuranceText}>No insurances available</Text>
+          <TouchableOpacity style={styles.bookButton} onPress={handleBookPress} disabled={isSubmitting}>
+            <Text style={styles.bookButtonText}>Book Appointment</Text>
+          </TouchableOpacity>
+
+
+          <AwesomeAlert
+            show={showAlert}
+            title={alertType === 'success' ? 'Success' : 'Error'}
+            message={alertMessage}
+            closeOnTouchOutside={true}
+            closeOnHardwareBackPress={false}
+            showCancelButton={false}
+            showConfirmButton={true}
+            confirmText="OK"
+            onConfirmPressed={() => {
+              setShowAlert(false);
+              if (alertType === 'success') resetForm();
+            }}
+          />
+
+          <Paystack
+            paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
+            billingEmail={userEmail}
+            amount={consultationFee * 100}
+            currency='KES'
+            onCancel={handlePaymentCancel}
+            onSuccess={handlePaymentSuccess}
+            ref={paystackWebViewRef}
+          />
+        </>
       )}
-      <TouchableOpacity style={styles.bookButton} onPress={handleBookPress} disabled={isSubmitting}>
-        <Text style={styles.bookButtonText}>Book Appointment</Text>
-      </TouchableOpacity>
-
-
-      <AwesomeAlert
-        show={showAlert}
-        title={alertType === 'success' ? 'Success' : 'Error'}
-        message={alertMessage}
-        closeOnTouchOutside={true}
-        closeOnHardwareBackPress={false}
-        showCancelButton={false}
-        showConfirmButton={true}
-        confirmText="OK"
-        onConfirmPressed={() => {
-          setShowAlert(false);
-          if (alertType === 'success') resetForm();
-        }}
-      />
-
-      <Paystack
-        paystackKey="pk_test_81ffccf3c88b1a2586f456c73718cfd715ff02b0"
-        billingEmail={userEmail}
-        amount={consultationFee * 100}
-        currency='KES'
-        onCancel={handlePaymentCancel}
-        onSuccess={handlePaymentSuccess}
-        ref={paystackWebViewRef}
-      />
     </View>
   );
 };

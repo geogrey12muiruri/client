@@ -1,33 +1,27 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import { logoutAction, selectUser, setProfileImage } from '../app/(redux)/authSlice'; 
+import { logoutAction, selectUser } from '../app/(redux)/authSlice';
 import { useRouter } from 'expo-router';
 import AntDesign from '@expo/vector-icons/AntDesign';
+import { Badge } from 'react-native-elements';
+
 import Colors from './Shared/Colors';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { theme } from '@/constants/theme';
 
 const ClientHeader: React.FC<{ title: string }> = ({ title }) => {
   const dispatch = useDispatch();
   const router = useRouter();
   const { profileImage, name, userId } = useSelector(selectUser);
+  const [notificationCount, setNotificationCount] = useState(0);
 
   useEffect(() => {
-    const loadProfileImage = async () => {
-      const storedImageUrl = await AsyncStorage.getItem('profileImage');
-      if (storedImageUrl) {
-        dispatch(setProfileImage(storedImageUrl));
-      }
+    return () => {
     };
-    loadProfileImage();
-  }, [dispatch, userId]);
+  }, [userId]);
 
-  const handleLogout = async () => {
-    await AsyncStorage.removeItem('userInfo'); 
-    await AsyncStorage.removeItem('profileImage'); 
+  const handleLogout = () => {
     dispatch(logoutAction());
-    router.push('/auth/login'); 
+    router.push('/auth/login');
   };
 
   return (
@@ -43,6 +37,16 @@ const ClientHeader: React.FC<{ title: string }> = ({ title }) => {
       </View>
       <Text style={styles.title}>{title}</Text>
       <View style={styles.rightSection}>
+        <TouchableOpacity style={styles.notificationButton}>
+          <AntDesign name="bells" size={24} color="black" />
+          {notificationCount > 0 && (
+            <Badge
+              value={notificationCount}
+              status="error"
+              containerStyle={styles.badgeContainer}
+            />
+          )}
+        </TouchableOpacity>
         <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
           <AntDesign name="logout" size={24} color="black" />
         </TouchableOpacity>
@@ -53,16 +57,14 @@ const ClientHeader: React.FC<{ title: string }> = ({ title }) => {
 
 const styles = StyleSheet.create({
   container: {
-    height: 150,
-    borderBottomLeftRadius: 50,
-    borderBottomRightRadius: 50,
-    backgroundColor: theme.colors.headerColor,
-    shadowColor: theme.colors.backgroundHighlightColor,
-    elevation: 25,
-    flexDirection: 'row', // Added to align items horizontally
-    justifyContent: 'space-between', // Added to space out items
-    alignItems: 'center', // Added to center items vertically
-    paddingHorizontal: 20, // Added padding for better spacing
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: Colors.ligh_gray,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingTop: 40, // Increased padding to create space from the status bar
+    elevation: 4,
   },
   leftSection: {
     flexDirection: 'row',
@@ -72,6 +74,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+    flex: 1,
     textAlign: 'center',
   },
   profileImage: {
@@ -97,6 +100,15 @@ const styles = StyleSheet.create({
   rightSection: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  notificationButton: {
+    padding: 8,
+    position: 'relative',
+  },
+  badgeContainer: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
   },
   logoutButton: {
     padding: 8,

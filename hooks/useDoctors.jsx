@@ -14,15 +14,20 @@ const useDoctors = () => {
     console.log('Raw Doctor List:', rawDoctorList);
   }, [rawDoctorList]);
 
-  const doctorList = rawDoctorList.map(doctor => ({
-    id: doctor._id,
-    name: `${doctor.firstName} ${doctor.lastName}`,
-    specialty: doctor.specialty || 'General',
-    experience: doctor.clinicId?.experiences || [],
-    profileImage: doctor.profileImage,
-    clinicAddress: doctor.clinicId?.address,
-    insuranceCompanies: doctor.clinicId?.insuranceCompanies || [],
-  }));
+  const doctorList = rawDoctorList.map(doctor => {
+    const doctorData = {
+      id: doctor._id,
+      name: `${doctor.firstName} ${doctor.lastName}`,
+      specialty: doctor.specialty || 'General',
+      experience: doctor.clinicId?.experiences || [],
+      profileImage: doctor.profileImage,
+      clinicAddress: doctor.clinicId?.address,
+      insuranceCompanies: doctor.clinicId?.insuranceCompanies || [],
+      userId: doctor.user?._id || doctor._id, // Ensure userId is correctly mapped
+    };
+    console.log('Doctor Data:', doctorData);
+    return doctorData;
+  });
 
   const loading = useSelector((state) => state.doctors?.loading);
   const error = useSelector((state) => state.doctors?.error);

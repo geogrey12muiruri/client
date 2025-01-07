@@ -12,44 +12,29 @@ import {
   StatusBar,
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import ActionButton from '../../../components/common/ActionButton';
-import Colors from '../../../components/Shared/Colors';
-import {
-  fetchClinicById,
-  selectClinicDetails,
-  selectClinicLoading,
-  selectClinicError,
-} from '../../(redux)/clinicSlice';
 import ClinicSubHeading from '../../../components/clinics/ClinicSubHeading';
 import { theme } from '@/constants/theme';
+import Colors from '../../../components/Shared/Colors';
+import useInsurance from '../../../hooks/useInsurance';
+import Doctors from '../../../components/client/Doctors'; // Ensure this import is correct
 
 const ClinicProfileScreen = () => {
-  const { id } = useLocalSearchParams();
+  const { id, clinic, doctors } = useLocalSearchParams();
   const clinicId = Array.isArray(id) ? id[0] : id;
-  const dispatch = useDispatch();
+  const clinicData = clinic ? JSON.parse(clinic) : null;
+  const doctorsData = doctors ? JSON.parse(doctors) : [];
   const router = useRouter();
+  const { insuranceProviders } = useInsurance(); // Use the insurance hook
 
-  const clinic = useSelector(selectClinicDetails);
-  const clinicImages = clinic?.clinicImages || [];
-  const loading = useSelector(selectClinicLoading);
-  const error = useSelector(selectClinicError);
-
-  const [currentImage, setCurrentImage] = useState(null);
+  const clinicImages = clinicData?.clinicImages || [];
+  const [currentImage, setCurrentImage] = useState(clinicImages[0] || null);
   const imageFadeAnim = useRef(new Animated.Value(1)).current;
   const [showFullDesc, setShowFullDesc] = useState(false);
 
   useEffect(() => {
-    if (clinicId) {
-      dispatch(fetchClinicById(clinicId));
-    }
-  }, [clinicId, dispatch]);
-
-  useEffect(() => {
     if (clinicImages.length) {
-      setCurrentImage(clinicImages[0]);
       let index = 0;
       const interval = setInterval(() => {
         index = (index + 1) % clinicImages.length;
@@ -72,62 +57,44 @@ const ClinicProfileScreen = () => {
   }, [clinicImages, imageFadeAnim]);
 
   useEffect(() => {
-    console.log('Clinic Data:', clinic);
+    console.log('Clinic Data:', clinicData);
     console.log('Doctors Data:', doctorsData);
-  }, [clinic]);
+  }, [clinicData, doctorsData]);
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.PRIMARY} />
-        <Text>Loading Clinic Information...</Text>
-      </View>
-    );
-  }
-
-  if (error || !clinic) {
+  if (!clinicData) {
     return (
       <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>
-          {error ? 'Failed to load clinic data' : 'No clinic found'}
-        </Text>
+        <Text style={styles.errorText}>No clinic data found</Text>
       </View>
     );
   }
 
-  const doctorsData = [
-    ...(clinic.professionals || []).map(professional => ({
-      _id: professional._id,
-      name: `${professional.firstName} ${professional.lastName}`,
-      specialties: [professional.category || professional.profession],
-      profileImage: professional.profileImage,
-      consultationFee: professional.consultationFee || 0,
-    })),
-    ...(clinic.doctors || []).map(doctor => ({
-      _id: doctor._id,
-      name: doctor.name,
-      specialties: doctor.specialties || [],
-      profileImage: doctor.profileImage,
-      consultationFee: doctor.consultationFee || 0,
-    }))
-  ];
+  const insuranceDetails = clinicData.insuranceProviders.map(id => {
+    const provider = insuranceProviders.find(provider => provider._id === id);
+    return provider ? { name: provider.name, icon: provider.icon } : { name: 'Unknown', icon: null };
+  });
 
   return (
     <ScrollView style={styles.container}>
       <StatusBar barStyle="dark-content" />
       {/* Hero Section */}
       <View style={styles.heroContainer}>
-        {currentImage && (
+        {currentImage ? (
           <Animated.Image
             source={{ uri: currentImage }}
             style={[styles.heroImage, { opacity: imageFadeAnim }]}
+          />
+        ) : (
+          <Image
+            source={clinicData.profileImage ? { uri: clinicData.profileImage } : 'https://res.cloudinary.com/dws2bgxg4/image/upload/v1734385887/loginp_ovgecg.png'}
+            style={styles.heroImage}
           />
         )}
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <View style={styles.heroOverlay}>
-          <Text style={styles.heroText}>{clinic.name}</Text>
+          <Text style={styles.heroText}>{clinicData.practiceName}</Text>
         </View>
       </View>
 
@@ -135,9 +102,9 @@ const ClinicProfileScreen = () => {
       <View style={styles.section}>
         <ClinicSubHeading subHeadingTitle="About Us" />
         <Text style={styles.descriptionText}>
-          {showFullDesc ? clinic.bio : clinic.bio?.slice(0, 100) || 'No description available'}
+          {showFullDesc ? clinicData.bio : clinicData.bio?.slice(0, 100) || 'No description available'}
         </Text>
-        {clinic.bio && (
+        {clinicData.bio && (
           <TouchableOpacity onPress={() => setShowFullDesc(!showFullDesc)}>
             <Text style={styles.showMoreText}>{showFullDesc ? 'Show Less' : 'Show More'}</Text>
           </TouchableOpacity>
@@ -148,7 +115,7 @@ const ClinicProfileScreen = () => {
       <View style={styles.section}>
         <ClinicSubHeading subHeadingTitle="Specialties" />
         <FlatList
-          data={clinic.specialties.split(',')}
+          data={clinicData.category ? [clinicData.category] : []}
           renderItem={({ item }) => (
             <View style={styles.specialtyCard}>
               <Text style={styles.specialtyText}>{item}</Text>
@@ -164,10 +131,11 @@ const ClinicProfileScreen = () => {
       <View style={styles.section}>
         <ClinicSubHeading subHeadingTitle="Insurance Providers" />
         <FlatList
-          data={clinic.insuranceCompanies}
+          data={insuranceDetails}
           renderItem={({ item }) => (
             <View style={styles.insuranceCard}>
-              <Text style={styles.insuranceText}>{item}</Text>
+              {item.icon && <Image source={{ uri: item.icon }} style={styles.insuranceIcon} />}
+              <Text style={styles.insuranceText}>{item.name}</Text>
             </View>
           )}
           keyExtractor={(item, index) => index.toString()}
@@ -176,30 +144,34 @@ const ClinicProfileScreen = () => {
         />
       </View>
 
-      {/* Doctors */}
+      {/* Working Hours */}
       <View style={styles.section}>
-        <ClinicSubHeading subHeadingTitle="Our Doctors" />
+        <ClinicSubHeading subHeadingTitle="Working Hours" />
+        <Text style={styles.workingHoursText}>
+          {clinicData.workingHours.startTime} - {clinicData.workingHours.endTime}
+        </Text>
+      </View>
+
+      {/* Working Days */}
+      <View style={styles.section}>
+        <ClinicSubHeading subHeadingTitle="Working Days" />
         <FlatList
-          data={doctorsData}
+          data={clinicData.workingDays}
           renderItem={({ item }) => (
-            <View style={styles.doctorCard}>
-              <Image source={{ uri: item.profileImage }} style={styles.doctorImage} />
-              <View style={styles.doctorInfo}>
-                <Text style={styles.doctorName}>{item.name}</Text>
-                <Text style={styles.doctorSpecialty}>{item.specialties.join(', ')}</Text>
-                <TouchableOpacity
-                  style={styles.consultButton}
-                  onPress={() => router.push(`/doctors/${item._id}`)}
-                >
-                  <Text style={styles.consultButtonText}>Consult</Text>
-                </TouchableOpacity>
-              </View>
+            <View style={styles.workingDayCard}>
+              <Text style={styles.workingDayText}>{item}</Text>
             </View>
           )}
-          keyExtractor={(item) => item._id.toString()}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.doctorsList}
+          keyExtractor={(item, index) => index.toString()}
+          horizontal
+          showsHorizontalScrollIndicator={false}
         />
+      </View>
+
+      {/* Medical Professionals */}
+      <View style={styles.section}>
+        <ClinicSubHeading subHeadingTitle="Medical Professionals" />
+        <Doctors searchQuery="" excludeDoctorId={null} />
       </View>
     </ScrollView>
   );
@@ -246,6 +218,8 @@ const styles = StyleSheet.create({
   },
   specialtyText: { fontSize: 14, color: '#555' },
   insuranceCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 10,
     marginRight: 10,
     backgroundColor: '#fff',
@@ -255,7 +229,20 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     elevation: 2,
   },
+  insuranceIcon: { width: 30, height: 30, marginRight: 10 },
   insuranceText: { fontSize: 14, color: '#555' },
+  workingHoursText: { fontSize: 16, color: '#333' },
+  workingDayCard: {
+    padding: 10,
+    marginRight: 10,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
+  },
+  workingDayText: { fontSize: 14, color: '#555' },
   doctorCard: {
     flexDirection: 'row',
     padding: 10,
@@ -275,4 +262,6 @@ const styles = StyleSheet.create({
   consultButton: { backgroundColor: Colors.PRIMARY, borderRadius: 5, paddingVertical: 8, paddingHorizontal: 15 },
   consultButtonText: { color: '#fff', fontWeight: 'bold' },
   doctorsList: { paddingBottom: 15 },
+  errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  errorText: { fontSize: 18, color: 'red' },
 });

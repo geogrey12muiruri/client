@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useSelector } from 'react-redux';
-import { selectUser } from '../app/(redux)/authSlice';
+import moment from 'moment';
 
 interface Slot {
   _id: string;
@@ -15,104 +14,79 @@ interface Slot {
 interface UseScheduleHook {
   schedule: Slot[];
   fetchSchedule: (professionalId: string) => Promise<void>;
-  createOrUpdateSchedule: (professionalId: string, availability: Slot[]) => Promise<void>;
-  createRecurringSlots: (professionalId: string, slot: Slot, recurrence: string) => Promise<void>;
-  subscribeToScheduleUpdates: (professionalId: string) => void;
-  updateSlot: (slotId: string, updates: Partial<Slot>) => Promise<void>;
-  fetchScheduleForDate: (professionalId: string, date: string) => Promise<Slot[]>;
+  updateSlot: (slotId: string, updates: Partial<Slot>) => void;
+  loading: boolean;
+  error: string | null;
 }
 
-const useSchedule = (): UseScheduleHook => {
+const useSchedule = (doctorId: string): UseScheduleHook => {
   const [schedule, setSchedule] = useState<Slot[]>([]);
-  const user = useSelector(selectUser);
-  const professionalId = user.professional?._id;
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (professionalId) {
-      fetchSchedule(professionalId);
+    if (doctorId) {
+      fetchSchedule(doctorId);
     }
-  }, [professionalId]);
+  }, [doctorId]);
 
-  const fetchSchedule = async (professionalId: string) => {
-    try {
-      const response = await axios.get(`https://medplus-health.onrender.com/api/schedule/${professionalId}`);
-      if (response.status === 200 && response.data.slots) {
-        setSchedule(response.data.slots);
-      }
-    } catch (error) {
-      console.error('Error fetching schedule:', axios.isAxiosError(error) ? error.message : error);
-    }
-  };
+  const generateSlots = (startTime: string, endTime: string) => {
+    const slots = [];
+    const consultationDuration = 60; // 60 minutes
+    const waitingTime = 10; // 10 minutes
 
-  const createOrUpdateSchedule = async (professionalId: string, availability: Slot[]) => {
-    try {
-      const response = await axios.put(`https://medplus-health.onrender.com/api/schedule`, {
-        professionalId,
-        availability,
+    let start = moment(startTime, 'h:mm A');
+    const end = moment(endTime, 'h:mm A');
+
+    while (start.add(consultationDuration + waitingTime, 'minutes').isBefore(end) || start.isSame(end)) {
+      const slotStart = start.clone().subtract(consultationDuration + waitingTime, 'minutes');
+      const slotEnd = slotStart.clone().add(consultationDuration, 'minutes');
+      slots.push({
+        startTime: slotStart.format('h:mm A'),
+        endTime: slotEnd.format('h:mm A'),
+        isBooked: false,
+        _id: `${slotStart.format('HHmm')}-${slotEnd.format('HHmm')}`,
       });
-      if (response.status === 200) {
-        fetchSchedule(professionalId);
+    }
+
+    return slots;
+  };
+
+  const fetchSchedule = async (doctorId: string) => {
+    try {
+      const response = await axios.get(`https://medplus-health.onrender.com/api/schedule/${doctorId}`);
+      console.log('Fetched schedule data:', response.data); // Log the fetched schedule data
+      if (response.status === 200 && response.data.availability) {
+        const transformedSchedule = Object.entries(response.data.availability).flatMap(([date, shifts]: [string, any[]]) => {
+          return shifts.flatMap(shift => generateSlots(shift.startTime, shift.endTime).map(slot => ({
+            ...slot,
+            date,
+            _id: `${date}-${slot._id}`,
+          })));
+        });
+        setSchedule(transformedSchedule);
       }
+      setLoading(false);
     } catch (error) {
-      console.error('Error creating or updating schedule:', axios.isAxiosError(error) ? error.message : error);
+      setError(axios.isAxiosError(error) ? error.message : 'Failed to load schedule');
+      setLoading(false);
     }
   };
 
-  const createRecurringSlots = async (professionalId: string, slots: Slot[], recurrence: string) => {
-    try {
-      const response = await axios.post(`https://medplus-health.onrender.com/api/schedule/createRecurringSlots`, {
-        professionalId,
-        slots,
-        recurrence,
-      });
-      if (response.status === 200) {
-        fetchSchedule(professionalId);
-      }
-    } catch (error) {
-      console.error('Error creating recurring slots:', axios.isAxiosError(error) ? error.message : error);
-    }
-  };
-
-  const subscribeToScheduleUpdates = (professionalId: string) => {
-    const socket = new WebSocket(`wss://medplus-health.onrender.com/schedule/${professionalId}`);
-    socket.onmessage = (event) => {
-      const updatedSchedule = JSON.parse(event.data);
-      setSchedule(updatedSchedule);
-    };
-  };
-
-  const updateSlot = async (slotId: string, updates: Partial<Slot>) => {
-    try {
-      const updatedSchedule = schedule.map(slot =>
+  const updateSlot = (slotId: string, updates: Partial<Slot>) => {
+    setSchedule(prevSchedule =>
+      prevSchedule.map(slot =>
         slot._id === slotId ? { ...slot, ...updates } : slot
-      );
-      setSchedule(updatedSchedule);
-    } catch (error) {
-      console.error('Error updating slot:', error);
-    }
-  };
-
-  const fetchScheduleForDate = async (professionalId: string, date: string) => {
-    try {
-      const response = await axios.get(`https://medplus-health.onrender.com/api/schedule/${professionalId}/${date}`);
-      if (response.status === 200 && response.data.slots) {
-        return response.data.slots;
-      }
-      return [];
-    } catch (error) {
-      console.error('Error fetching schedule for date:', axios.isAxiosError(error) ? error.message : error);
-      return [];
-    }
+      )
+    );
   };
 
   return {
     schedule,
     fetchSchedule,
-    createOrUpdateSchedule,
-    createRecurringSlots,
-    subscribeToScheduleUpdates,
     updateSlot,
-    fetchScheduleForDate,
+    loading,
+    error,
   };
 };
 

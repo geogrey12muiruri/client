@@ -11,28 +11,19 @@ import {
   Image,
   ScrollView,
   Animated,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useSelector, useDispatch } from 'react-redux';
-
 import { Picker } from '@react-native-picker/picker';
 import { Icon } from 'react-native-elements';
-
-import { debounce } from 'lodash';
-
-import {
-  fetchClinics,
-  filterClinics,
-  selectClinics,
-  setSelectedClinic,
-} from '../(redux)/clinicSlice';
+import axios from 'axios';
 import Colors from '../../components/Shared/Colors';
-import { useNavigation } from '@react-navigation/native';
+import useInsurance from '../../hooks/useInsurance';
+
 
 const ClinicSearch = () => {
   const router = useRouter();
-  const navigation = useNavigation();
-  const dispatch = useDispatch();
+  const [clinics, setClinics] = useState([]);
   const [filteredClinics, setFilteredClinics] = useState([]);
   const [filteredProfessionals, setFilteredProfessionals] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState('');
@@ -40,45 +31,73 @@ const ClinicSearch = () => {
   const [selectedInsurance, setSelectedInsurance] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
-  const clinics = useSelector(selectClinics);
+  const { insuranceProviders } = useInsurance(); // Use the insurance hook
 
   useEffect(() => {
-    try {
-      if (clinics.length > 0) {
-        const allProfessionals = clinics.flatMap((clinic) =>
-          clinic.professionals?.map((professional) => ({
-            ...professional,
-            clinicName: clinic.name,
-            clinicAddress: clinic.address,
-            clinicInsurances: clinic.insuranceCompanies,
-          })) || []
-        );
-        setFilteredProfessionals(allProfessionals);
-        setFilteredClinics(clinics);
+    const fetchClinics = async () => {
+      try {
+        const response = await axios.get('https://medplus-health.onrender.com/api/professionals');
+        console.log('Fetched clinics raw data:', response.data); // Log the raw fetched data
+        const transformedData = response.data.map((clinic) => {
+          const insuranceNames = clinic.insuranceProviders.map(id => {
+            const provider = insuranceProviders.find(provider => provider._id === id);
+            return provider ? provider.name : 'Unknown';
+          });
+          const doctorData = {
+            id: clinic._id, // Unique identifier for the doctor
+            userId: clinic.user._id, // Extract userId from the user attribute
+            firstName: clinic.firstName, // Doctor's first name
+            lastName: clinic.lastName, // Doctor's last name
+            specialty: clinic.professionalDetails?.specialization || 'N/A', // Doctor's specialty
+            profileImage: clinic.profileImage, // URL to the doctor's profile image
+            clinicAddress: clinic.practiceLocation, // Address of the clinic where the doctor practices
+            clinicName: clinic.practiceName || 'Unknown Clinic', // Name of the clinic, with a default value if not provided
+            bio: clinic.bio || 'No bio available', // Doctor's biography, with a default value if not provided
+            title: clinic.title || 'N/A', // Doctor's title, with a default value if not provided
+            profession: clinic.profession || 'N/A', // Doctor's profession, with a default value if not provided
+            consultationFee: clinic.consultationFee || 'N/A', // Consultation fee, with a default value if not provided
+            clinic: clinic.clinic || { insuranceCompanies: [] }, // Clinic information, with a default value if not provided
+            insuranceProviders: insuranceNames, // List of insurance providers the doctor accepts, mapped from IDs to names
+            yearsOfExperience: clinic.professionalDetails?.yearsOfExperience || 'N/A', // Years of experience
+            specializedTreatment: clinic.professionalDetails?.specializedTreatment || 'N/A', // Specialized treatment
+            certifications: clinic.professionalDetails?.certifications || [], // Certifications
+          };
+          console.log('Transformed doctor data:', doctorData); // Log the transformed doctor data
+          return {
+            _id: clinic._id,
+            name: clinic.practiceName, // Use practiceName for clinic name
+            category: clinic.professionalDetails?.specialization || 'N/A',
+            address: clinic.practiceLocation, // Use practiceLocation for clinic address
+            clinicImages: clinic.clinic_images,
+            profileImage: clinic.profileImage,
+            insuranceProviders: insuranceNames, // Use mapped insurance names
+            practiceLocation: clinic.practiceLocation,
+            practiceName: clinic.practiceName,
+            workingHours: clinic.workingHours,
+            workingDays: clinic.workingDays,
+            doctors: [doctorData], // Add the transformed doctors data
+          };
+        });
+        console.log('Transformed clinic data:', transformedData); // Log the transformed data
+        setClinics(transformedData); // Set the transformed data to the state
+        setFilteredClinics(transformedData);
+        setFilteredProfessionals(transformedData.flatMap(clinic => clinic.doctors));
+        setLoading(false); // Set loading to false after data is fetched and transformed
+      } catch (error) {
+        setError(error.message || 'Failed to load clinics'); // Set error message if the fetch fails
+        setLoading(false); // Set loading to false if there is an error
       }
-    } catch (err) {
-      setError('Failed to load data');
-    } finally {
-      setLoading(false);
-    }
-  }, [clinics]);
+    };
+
+    fetchClinics();
+  }, [insuranceProviders]);
 
   const resetFilters = () => {
     setSelectedLocation('');
     setSelectedSpecialty('');
     setSelectedInsurance('');
     setFilteredClinics(clinics);
-    setFilteredProfessionals(
-      clinics.flatMap((clinic) =>
-        clinic.professionals?.map((professional) => ({
-          ...professional,
-          clinicName: clinic.name,
-          clinicAddress: clinic.address,
-          clinicInsurances: clinic.insuranceCompanies,
-        })) || []
-      )
-    );
+    setFilteredProfessionals(clinics.flatMap(clinic => clinic.doctors));
   };
 
   const handleLocationChange = (location) => {
@@ -87,16 +106,7 @@ const ClinicSearch = () => {
       clinic.address?.toLowerCase().includes(location.toLowerCase())
     );
     setFilteredClinics(locationFilteredClinics);
-    setFilteredProfessionals(
-      locationFilteredClinics.flatMap((clinic) =>
-        clinic.professionals?.map((professional) => ({
-          ...professional,
-          clinicName: clinic.name,
-          clinicAddress: clinic.address,
-          clinicInsurances: clinic.insuranceCompanies,
-        })) || []
-      )
-    );
+    setFilteredProfessionals(locationFilteredClinics.flatMap(clinic => clinic.doctors));
   };
 
   const handleSpecialtyChange = (specialty) => {
@@ -108,81 +118,60 @@ const ClinicSearch = () => {
     setFilteredProfessionals(specialtyFilteredProfessionals);
   };
 
-  const handlePress = (item: any) => {
+  const handlePress = (item) => {
     console.log("Navigating to clinic with ID:", item._id);
-    dispatch(setSelectedClinic(item));
-
     router.push({
-      pathname: `/hospital/book-appointment/[id]`,
-      params: { id: item._id },
+      pathname: `/hospital/book-appointment/${item._id}`,
+      params: { clinic: JSON.stringify(item), doctors: JSON.stringify(item.doctors) },
+    });
+  };
+
+  const handleDoctorPress = (doctor) => {
+    console.log("Navigating to doctor with ID:", doctor.id);
+    router.push({
+      pathname: `/doctors/${doctor.userId}`, // Pass userId as doctorId
+      params: { doctor: JSON.stringify(doctor) },
     });
   };
 
   const handleInsuranceChange = (insurance) => {
     setSelectedInsurance(insurance);
     const insuranceFilteredClinics = filteredClinics.filter((clinic) =>
-      clinic.insuranceCompanies?.some((provider) =>
+      clinic.insuranceProviders?.some((provider) =>
         provider?.toLowerCase().includes(insurance.toLowerCase())
       )
     );
-    setFilteredProfessionals(
-      insuranceFilteredClinics.flatMap((clinic) =>
-        clinic.professionals?.map((professional) => ({
-          ...professional,
-          clinicName: clinic.name,
-          clinicAddress: clinic.address,
-          clinicInsurances: clinic.insuranceCompanies,
-        })) || []
-      )
-    );
+    setFilteredProfessionals(insuranceFilteredClinics.flatMap(clinic => clinic.doctors));
   };
 
   const handleCombinedFilters = () => {
     const filtered = clinics.filter(
       (clinic) =>
-        clinic.address.toLowerCase().includes(selectedLocation.toLowerCase()) &&
-        clinic.insuranceCompanies.some((ins) =>
+        clinic.address?.toLowerCase().includes(selectedLocation.toLowerCase()) &&
+        clinic.insuranceProviders.some((ins) =>
           ins.toLowerCase().includes(selectedInsurance.toLowerCase())
         ) &&
-        clinic.professionals.some((prof) =>
+        clinic.doctors.some((prof) =>
           prof.specialty.toLowerCase().includes(selectedSpecialty.toLowerCase())
         )
     );
     setFilteredClinics(filtered);
-    setFilteredProfessionals(
-      filtered.flatMap((clinic) =>
-        clinic.professionals?.map((professional) => ({
-          ...professional,
-          clinicName: clinic.name,
-          clinicAddress: clinic.address,
-          clinicInsurances: clinic.insuranceCompanies,
-        })) || []
-      )
-    );
+    setFilteredProfessionals(filtered.flatMap(clinic => clinic.doctors));
   };
 
-  const handleSearchChange = debounce((text) => {
+  const handleSearchChange = (text) => {
     const searchQuery = text.toLowerCase();
     const searchedClinics = clinics.filter((clinic) =>
       clinic.name.toLowerCase().includes(searchQuery) ||
       clinic.address.toLowerCase().includes(searchQuery) ||
-      clinic.professionals.some((prof) =>
+      clinic.doctors.some((prof) =>
         prof.firstName.toLowerCase().includes(searchQuery) ||
         prof.lastName.toLowerCase().includes(searchQuery)
       )
     );
     setFilteredClinics(searchedClinics);
-    setFilteredProfessionals(
-      searchedClinics.flatMap((clinic) =>
-        clinic.professionals?.map((professional) => ({
-          ...professional,
-          clinicName: clinic.name,
-          clinicAddress: clinic.address,
-          clinicInsurances: clinic.insuranceCompanies,
-        })) || []
-      )
-    );
-  }, 300);
+    setFilteredProfessionals(searchedClinics.flatMap(clinic => clinic.doctors));
+  };
 
   const ClinicItem = ({ item }) => {
     const [currentImage, setCurrentImage] = useState(null);
@@ -233,7 +222,6 @@ const ClinicSearch = () => {
         <View style={styles.cardContent}>
           <Text style={styles.cardTitle}>{item.name}</Text>
           <Text>{item.address}</Text>
-          <Text>{item.insuranceCompanies.join(', ')}</Text>
         </View>
       </TouchableOpacity>
     );
@@ -242,18 +230,17 @@ const ClinicSearch = () => {
   const uniqueLocations = [...new Set(clinics.map((clinic) => clinic.address?.split(',')[0] || ''))];
   const uniqueSpecialties = [
     ...new Set(
-      clinics.flatMap((clinic) => clinic.professionals?.map((professional) => professional.specialty) || [])
+      clinics.flatMap((clinic) => clinic.doctors?.map((professional) => professional.specialty) || [])
     ),
   ];
   const uniqueInsurances = [
-    ...new Set(clinics.flatMap((clinic) => clinic.insuranceCompanies || [])),
+    ...new Set(clinics.flatMap((clinic) => clinic.insuranceProviders || [])),
   ];
 
   if (loading) {
     return (
       <View style={styles.centered}>
-        {/* Skeleton Loader */}
-        <Text>Loading...</Text>
+        <ActivityIndicator size="large" color={Colors.PRIMARY} />
       </View>
     );
   }
@@ -284,7 +271,7 @@ const ClinicSearch = () => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Icon name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
         <View style={styles.searchBar}>
@@ -300,14 +287,28 @@ const ClinicSearch = () => {
         </TouchableOpacity>
       </View>
       <ScrollView>
-        <Picker selectedValue={selectedLocation} onValueChange={(value) => { setSelectedLocation(value); handleCombinedFilters(); }} style={styles.picker}>
+        <Picker
+          selectedValue={selectedLocation}
+          onValueChange={(value) => {
+            setSelectedLocation(value);
+            handleCombinedFilters();
+          }}
+          style={styles.picker}
+        >
           <Picker.Item label="Select Location" value="" />
           {uniqueLocations.map((location, index) => (
             <Picker.Item key={index} label={location} value={location} />
           ))}
         </Picker>
         {selectedLocation && (
-          <Picker selectedValue={selectedSpecialty} onValueChange={(value) => { setSelectedSpecialty(value); handleCombinedFilters(); }} style={styles.picker}>
+          <Picker
+            selectedValue={selectedSpecialty}
+            onValueChange={(value) => {
+              setSelectedSpecialty(value);
+              handleCombinedFilters();
+            }}
+            style={styles.picker}
+          >
             <Picker.Item label="Select Specialty" value="" />
             {uniqueSpecialties.map((specialty, index) => (
               <Picker.Item key={index} label={specialty} value={specialty} />
@@ -315,7 +316,14 @@ const ClinicSearch = () => {
           </Picker>
         )}
         {selectedSpecialty && (
-          <Picker selectedValue={selectedInsurance} onValueChange={(value) => { setSelectedInsurance(value); handleCombinedFilters(); }} style={styles.picker}>
+          <Picker
+            selectedValue={selectedInsurance}
+            onValueChange={(value) => {
+              setSelectedInsurance(value);
+              handleCombinedFilters();
+            }}
+            style={styles.picker}
+          >
             <Picker.Item label="Select Insurance" value="" />
             {uniqueInsurances.map((insurance, index) => (
               <Picker.Item key={index} label={insurance} value={insurance} />
@@ -328,7 +336,7 @@ const ClinicSearch = () => {
             data={filteredProfessionals}
             renderItem={({ item }) => (
               <TouchableOpacity
-                onPress={() => router.push(`/doctors/${item._id}`)}
+                onPress={() => handleDoctorPress(item)}
                 style={styles.cardContainer}
               >
                 <Image
@@ -342,7 +350,7 @@ const ClinicSearch = () => {
                 </View>
               </TouchableOpacity>
             )}
-            keyExtractor={(item) => item._id}
+            keyExtractor={(item) => item.id}
           />
           <Text style={styles.sectionTitle}>Clinics</Text>
           <FlatList
