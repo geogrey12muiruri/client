@@ -68,6 +68,7 @@ const DoctorProfile: React.FC = () => {
   }
 
   console.log('Doctor clinicName:', doctor.clinicName); // Log clinicName
+  console.log('Doctor userId:', doctor.userId); // Log the userId
 
   const profileImageUri =
     doctor.profileImage ||

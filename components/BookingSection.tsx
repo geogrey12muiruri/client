@@ -31,7 +31,7 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
 
   const user = useSelector(selectUser);
   console.log(user)
-  const { name, email, userId: userIdFromState } = user;
+  const { name, email } = user;
   const userEmail = email;
   const patientName = name;
   const dispatch = useDispatch();
@@ -71,6 +71,8 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
     console.log('Fetched schedule:', schedule);
   }, [schedule]);
 
+  console.log('BookingSection userId:', userId); // Log the userId
+
   const handleBookPress = async () => {
     if (!selectedTimeSlot && !selectedInsurance) {
       Alert.alert('Error', 'Please select a time slot or insurance.');
@@ -95,9 +97,9 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
     setAlertType('success');
     let subaccountCode: string | null = null;
   
-    const fetchSubaccountCode = async (userId: string) => { // Use userId to fetch the subaccount code
+    const fetchSubaccountCode = async (doctorId: string) => { // Use doctorId to fetch the subaccount code
       try {
-        const response = await axios.get(`https://medplus-health.onrender.com/api/subaccount/${userId}`);
+        const response = await axios.get(`https://medplus-health.onrender.com/api/subaccount/${doctorId}`);
         if (response.data.status === 'Success') {
           const { subaccount_code } = response.data.data;
           subaccountCode = subaccount_code;
@@ -109,7 +111,7 @@ const BookingSection: React.FC<{ doctorId: string; userId: string; consultationF
       }
     };
   
-    await fetchSubaccountCode(userId); // Use userId to fetch the subaccount code
+    await fetchSubaccountCode(doctorId); // Use doctorId to fetch the subaccount code
   
     try {
       if (!subaccountCode || !userEmail) {
