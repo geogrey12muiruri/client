@@ -11,9 +11,9 @@ import { selectUser, updateUserProfile } from '../app/(redux)/authSlice';
 import useSchedule from '../hooks/useSchedule'; // Import the useSchedule hook
 import io from 'socket.io-client';
 
-const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insurances?: string[]; selectedInsurance?: string }> = ({
-  
+const BookingSection: React.FC<{ doctorId: string; userId: string; consultationFee: number; insurances?: string[]; selectedInsurance?: string }> = ({
   doctorId,
+  userId, // Accept userId
   consultationFee,
   insurances = [], // Default to an empty array if insurances is not provided
   selectedInsurance: initialSelectedInsurance = '', // Default to an empty string if selectedInsurance is not provided
@@ -31,7 +31,7 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
 
   const user = useSelector(selectUser);
   console.log(user)
-  const { name, email, userId } = user;
+  const { name, email, userId: userIdFromState } = user;
   const userEmail = email;
   const patientName = name;
   const dispatch = useDispatch();
@@ -95,9 +95,9 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
     setAlertType('success');
     let subaccountCode: string | null = null;
   
-    const fetchSubaccountCode = async (doctorId: string) => {
+    const fetchSubaccountCode = async (userId: string) => { // Use userId to fetch the subaccount code
       try {
-        const response = await axios.get(`https://medplus-health.onrender.com/api/subaccount/${doctorId}`);
+        const response = await axios.get(`https://medplus-health.onrender.com/api/subaccount/${userId}`);
         if (response.data.status === 'Success') {
           const { subaccount_code } = response.data.data;
           subaccountCode = subaccount_code;
@@ -109,7 +109,7 @@ const BookingSection: React.FC<{ doctorId: string; consultationFee: number; insu
       }
     };
   
-    await fetchSubaccountCode(doctorId); // Use doctorId to fetch the subaccount code
+    await fetchSubaccountCode(userId); // Use userId to fetch the subaccount code
   
     try {
       if (!subaccountCode || !userEmail) {

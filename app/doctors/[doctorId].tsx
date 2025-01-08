@@ -125,7 +125,8 @@ const DoctorProfile: React.FC = () => {
 
       {/* Booking Section */}
       <BookingSection
-        doctorId={doctor.userId} // Pass userId instead of doctorId
+        doctorId={doctor.userId} // Pass userId as doctorId
+        userId={doctor.id} // Pass actual doctorId as userId
         consultationFee={doctor.consultationFee || 'N/A'}
         insurances={doctor.insuranceProviders}
       />
