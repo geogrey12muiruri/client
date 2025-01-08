@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { TouchableOpacity, StyleSheet, View, Alert } from "react-native";
 import { Text } from "react-native-paper";
 import { useRouter } from "expo-router"; // Import useRouter from expo-router
+import { useDispatch } from "react-redux";
+import { loginAction } from "../(redux)/authSlice";
 import Background from "../../components/Background";
 import Logo from "../../components/Logo";
 import Header from "../../components/Header";
@@ -16,6 +18,7 @@ import Button from "@/components/Button";
 
 export default function LoginScreen() {
   const router = useRouter(); // Use useRouter hook
+  const dispatch = useDispatch();
   const [email, setEmail] = useState({ value: "", error: "" });
   const [password, setPassword] = useState({ value: "", error: "" });
 
@@ -33,6 +36,7 @@ export default function LoginScreen() {
       if (response.token) {
         await AsyncStorage.setItem("userToken", response.token);
         await AsyncStorage.setItem("userId", response.user._id);
+        dispatch(loginAction(response)); // Dispatch loginAction with the response
         router.push('/(client)')
       } else {
         Alert.alert("Login failed", "Invalid email or password");

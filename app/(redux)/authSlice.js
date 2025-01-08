@@ -73,19 +73,28 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     loginAction: (state, action) => {
+      const { token, user, professionalId } = action.payload;
       const userData = {
-        userId: action.payload.id,
-        email: action.payload.email,
-        username: action.payload.username,
-        token: action.payload.token,
+        userId: user._id,
+        email: user.email,
+        username: user.username,
+        token: token,
+        userType: user.userType,
+        professionalId: professionalId,
+        profileImage: user.profileImage,
+        phoneNumber: user.phoneNumber,
+        completedProfile: user.completedProfile,
       };
       
       state.user = userData;
-      state.name = action.payload.username; // Assuming the username is used as the name
-      state.email = action.payload.email;
-      state.userId = action.payload.id; // Store the correct userId
+      state.name = user.username; // Assuming the username is used as the name
+      state.email = user.email;
+      state.userId = user._id; // Store the correct userId
+      state.userType = user.userType;
       state.isAuthenticated = true;
       state.loading = false;
+      state.profileImage = user.profileImage;
+      state.professional = professionalId;
     
       // Save the user data to AsyncStorage
       AsyncStorage.setItem("userInfo", JSON.stringify(userData));
